@@ -4658,6 +4658,7 @@ function Quiz({ items, meta, qIndex, answers, onSelect, onNext, onPrev }) {
   const onNextRef = useRef(onNext);
   const item = items[qIndex];
   const selected = answers[qIndex];
+  const remainingCount = items.length - (qIndex + 1);
   if (!item) return null;
 
   useEffect(() => {
@@ -4707,25 +4708,43 @@ function Quiz({ items, meta, qIndex, answers, onSelect, onNext, onPrev }) {
           {meta.code}
           {item.tier && ` · ${TIER_LABEL[item.tier] || item.tier}`}
         </div>
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "6px 10px",
-            borderRadius: 999,
-            border: `1px solid ${timeLeft <= 10 ? COLORS.clay : COLORS.line}`,
-            background:
-              timeLeft <= 10
-                ? "rgba(193, 88, 63, 0.16)"
-                : "rgba(217, 164, 65, 0.12)",
-            color: timeLeft <= 10 ? COLORS.clay : COLORS.amber,
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 12,
-          }}
-        >
-          <Clock size={13} />
-          <span>{timeLabel}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 10px",
+              borderRadius: 999,
+              border: `1px solid ${COLORS.line}`,
+              background: "transparent",
+              color: COLORS.paperDim,
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 12,
+            }}
+          >
+            <span>{remainingCount} remaining</span>
+          </div>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 10px",
+              borderRadius: 999,
+              border: `1px solid ${timeLeft <= 10 ? COLORS.clay : COLORS.line}`,
+              background:
+                timeLeft <= 10
+                  ? "rgba(193, 88, 63, 0.16)"
+                  : "rgba(217, 164, 65, 0.12)",
+              color: timeLeft <= 10 ? COLORS.clay : COLORS.amber,
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 12,
+            }}
+          >
+            <Clock size={13} />
+            <span>{timeLabel}</span>
+          </div>
         </div>
       </div>
 
@@ -4766,7 +4785,7 @@ function Quiz({ items, meta, qIndex, answers, onSelect, onNext, onPrev }) {
             marginBottom: item.code ? 14 : 20,
           }}
         >
-          {item.q}
+          {`Q${qIndex + 1}. ${item.q}`}
         </div>
         <CodeBlock code={item.code} />
         <div style={{ display: "grid", gap: 10 }}>
@@ -5070,7 +5089,7 @@ function Result({
                     <div
                       style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.5 }}
                     >
-                      {i + 1}. {item.q}
+                      {`Q${i + 1}. ${item.q}`}
                     </div>
                     {isCorrect ? (
                       <CheckCircle2
@@ -5277,7 +5296,7 @@ function AnswerKey({ category, record, now, onHome }) {
                 }}
               >
                 <div style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.5 }}>
-                  {i + 1}. {item.q}
+                  {`Q${i + 1}. ${item.q}`}
                 </div>
                 {isCorrect ? (
                   <CheckCircle2
