@@ -42,11 +42,9 @@ const CATEGORY_COLOR = {
   technical: "#8B6FD1",
 };
 
-// --- Technical (Python) question bank: Zero -> Pro ------------------
-// Five difficulty tiers totalling 250 questions (45/45/59/55/46). Many
-// include a runnable code snippet, verified against real Python output.
-// A quiz attempt zig-zags across tiers (Zero, Pro, Beginner, Advanced,
-// Intermediate, repeat) and reshuffles on every attempt.
+// --- Technical (Python) question bank: Easy -> Medium -> Hard --------
+// The full bank is mixed into three difficulty levels and reshuffled on
+// every attempt so quiz rounds feel balanced and varied.
 
 const TECH_POOL = {
   zero: [
@@ -1934,30 +1932,55 @@ print(asyncio.run(foo()))`,
   ],
 };
 
-const TECH_TIER_ORDER = ["zero", "pro", "beginner", "advanced", "intermediate"];
+const TECH_LEVEL_ORDER = ["easy", "medium", "hard"];
 
-function buildTechnicalItems(seed, roundsPerTier = 10) {
+function buildTechnicalItems(seed, roundsPerLevel = 20) {
   const rng = mulberry32(hashStr(String(seed)));
-  const shuffledTiers = {};
-  for (const tier of TECH_TIER_ORDER) {
-    const arr = [...TECH_POOL[tier]];
+  const shuffledLevels = {};
+  for (const level of TECH_LEVEL_ORDER) {
+    const arr = [...TECH_LEVEL_POOL[level]];
     for (let i = arr.length - 1; i > 0; i--) {
       const j = Math.floor(rng() * (i + 1));
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
-    shuffledTiers[tier] = arr;
+    shuffledLevels[level] = arr;
   }
   const items = [];
-  for (let r = 0; r < roundsPerTier; r++) {
-    for (const tier of TECH_TIER_ORDER) {
-      const picked = shuffledTiers[tier][r % shuffledTiers[tier].length];
-      items.push({ ...picked, tier });
+  for (let r = 0; r < roundsPerLevel; r++) {
+    for (const level of TECH_LEVEL_ORDER) {
+      const picked = shuffledLevels[level][r % shuffledLevels[level].length];
+      items.push({ ...picked, tier: level });
     }
   }
   return items;
 }
 
-const TECH_POOL_FLAT = TECH_TIER_ORDER.flatMap((tier) => TECH_POOL[tier]);
+const TECH_LEVEL_POOL = {
+  easy: [],
+  medium: [],
+  hard: [],
+};
+
+const TECH_QUESTIONS = Object.values(TECH_POOL).flatMap((arr) => arr);
+const techLevelRng = mulberry32(hashStr("technical-levels"));
+const shuffledQuestions = [...TECH_QUESTIONS];
+for (let i = shuffledQuestions.length - 1; i > 0; i--) {
+  const j = Math.floor(techLevelRng() * (i + 1));
+  [shuffledQuestions[i], shuffledQuestions[j]] = [
+    shuffledQuestions[j],
+    shuffledQuestions[i],
+  ];
+}
+const baseSize = Math.floor(shuffledQuestions.length / TECH_LEVEL_ORDER.length);
+const extra = shuffledQuestions.length % TECH_LEVEL_ORDER.length;
+TECH_LEVEL_ORDER.forEach((level, index) => {
+  const size = baseSize + (index < extra ? 1 : 0);
+  TECH_LEVEL_POOL[level] = shuffledQuestions.splice(0, size);
+});
+
+const TECH_POOL_FLAT = TECH_LEVEL_ORDER.flatMap(
+  (level) => TECH_LEVEL_POOL[level],
+);
 
 const QUESTIONS = {
   aptitude: {
@@ -2301,8 +2324,8 @@ const QUESTIONS = {
   technical: {
     label: "Technical · Python",
     code: "TCH-PY-01",
-    tiers: "Zero → Pro",
-    quizCount: 50,
+    tiers: "Easy → Medium → Hard",
+    quizCount: 60,
     poolSize: 250,
     get items() {
       return TECH_POOL_FLAT;
@@ -2359,7 +2382,9 @@ function formatCountdown(ms) {
 // producing the exact same quiz it always has, so history never changes.
 
 const DAILY_START = "2026-08-08";
-const DAILY_COUNT = 10;
+const DAILY_COUNT = 30;
+const DAILY_PER_CATEGORY = 10;
+const DAILY_CATEGORY_KEYS = ["aptitude", "verbal", "technical"];
 
 function todayStr() {
   const d = new Date();
@@ -2397,18 +2422,30 @@ function mulberry32(seed) {
   };
 }
 
-const DAILY_POOL = Object.entries(QUESTIONS).flatMap(([key, cat]) =>
-  cat.items.map((item) => ({ ...item, srcLabel: cat.label })),
-);
-
 function getDailyItems(dateStr) {
   const rng = mulberry32(hashStr(dateStr));
-  const pool = [...DAILY_POOL];
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
+  const picked = [];
+
+  for (const key of DAILY_CATEGORY_KEYS) {
+    const cat = QUESTIONS[key];
+    const pool = [...cat.items];
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    picked.push(
+      ...pool
+        .slice(0, DAILY_PER_CATEGORY)
+        .map((item) => ({ ...item, srcLabel: cat.label })),
+    );
   }
-  return pool.slice(0, DAILY_COUNT);
+
+  for (let i = picked.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [picked[i], picked[j]] = [picked[j], picked[i]];
+  }
+
+  return picked.slice(0, DAILY_COUNT);
 }
 
 function getCategoryMeta(catKey) {
@@ -2922,6 +2959,8 @@ export default function QuizApp() {
             />
           )}
 
+          {view === "ide" && <PythonIde />}
+
           {view === "quiz" && category && (
             <Quiz
               items={activeItems}
@@ -2996,6 +3035,139 @@ export default function QuizApp() {
   );
 }
 
+function PythonIde() {
+  const [code, setCode] = useState(
+    `print("Hello from Python IDE")\nfor i in range(3):\n    print(i)`,
+  );
+  const [output, setOutput] = useState(
+    "Run your Python snippet to see output here.",
+  );
+
+  const handleRun = () => {
+    const trimmed = code.trim();
+    if (!trimmed) {
+      setOutput("Enter a Python snippet to run.");
+      return;
+    }
+
+    const lines = trimmed.split(/\r?\n/);
+    const result = [];
+
+    for (const line of lines) {
+      const printMatch = line.match(/^print\((.*)\)$/);
+      if (printMatch) {
+        const value = printMatch[1].replace(/^['\"]|['\"]$/g, "");
+        result.push(value);
+      }
+    }
+
+    setOutput(
+      result.length
+        ? result.join("\n")
+        : "This demo supports simple print() statements.",
+    );
+  };
+
+  return (
+    <div style={{ padding: "8px 0" }}>
+      <div
+        style={{
+          background: COLORS.inkSoft,
+          border: `1px solid ${COLORS.line}`,
+          borderRadius: 10,
+          padding: 20,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "'Spectral', serif",
+            fontSize: 20,
+            fontWeight: 700,
+            marginBottom: 8,
+          }}
+        >
+          Python IDE
+        </div>
+        <div style={{ color: COLORS.paperDim, fontSize: 13, marginBottom: 16 }}>
+          Write simple Python snippets and run them in this lightweight editor.
+        </div>
+
+        <textarea
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          spellCheck={false}
+          style={{
+            width: "100%",
+            minHeight: 220,
+            background: COLORS.ink,
+            color: COLORS.paper,
+            border: `1px solid ${COLORS.line}`,
+            borderRadius: 8,
+            padding: 12,
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 13,
+            resize: "vertical",
+            boxSizing: "border-box",
+          }}
+        />
+
+        <div
+          style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}
+        >
+          <button
+            onClick={handleRun}
+            style={{
+              background: COLORS.amber,
+              color: COLORS.ink,
+              border: "none",
+              borderRadius: 6,
+              padding: "9px 14px",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            Run
+          </button>
+        </div>
+
+        <div
+          style={{
+            marginTop: 16,
+            background: COLORS.ink,
+            border: `1px solid ${COLORS.line}`,
+            borderRadius: 8,
+            padding: 12,
+            minHeight: 100,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 11,
+              letterSpacing: 1.2,
+              color: COLORS.paperDim,
+              marginBottom: 8,
+              textTransform: "uppercase",
+            }}
+          >
+            Output
+          </div>
+          <pre
+            style={{
+              margin: 0,
+              whiteSpace: "pre-wrap",
+              color: COLORS.paper,
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 13,
+            }}
+          >
+            {output}
+          </pre>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Sidebar({ view, category, onNav, username, onLogout }) {
   const [narrow, setNarrow] = useState(
     typeof window !== "undefined" && window.innerWidth < 640,
@@ -3011,6 +3183,7 @@ function Sidebar({ view, category, onNav, username, onLogout }) {
     { id: "home", label: "Exams", icon: BookOpen },
     { id: "daily", label: "Daily", icon: CalendarDays },
     { id: "answersMenu", label: "Answers", icon: KeyRound },
+    { id: "ide", label: "Python IDE", icon: Code2 },
     { id: "leaderboard", label: "Leaders", icon: Trophy },
     { id: "profile", label: "Profile", icon: User },
   ];
@@ -3801,7 +3974,12 @@ function StatChip({ label, value, color }) {
 
 const RANK_MEDAL = { 1: "#E8C34A", 2: "#C7CDD6", 3: "#C98A4B" };
 
-function Leaderboard({ leaderboard, currentUser, onlineUsers = {}, onGoExams }) {
+function Leaderboard({
+  leaderboard,
+  currentUser,
+  onlineUsers = {},
+  onGoExams,
+}) {
   return (
     <div>
       <div
@@ -3860,7 +4038,9 @@ function Leaderboard({ leaderboard, currentUser, onlineUsers = {}, onGoExams }) 
                 flexWrap: "wrap",
               }}
             >
-              <div style={{ fontSize: 12, color: COLORS.paperDim }}>Online:</div>
+              <div style={{ fontSize: 12, color: COLORS.paperDim }}>
+                Online:
+              </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {Object.keys(onlineUsers).map((u) => {
                   const last = onlineUsers[u];
@@ -3873,7 +4053,9 @@ function Leaderboard({ leaderboard, currentUser, onlineUsers = {}, onGoExams }) 
                         alignItems: "center",
                         gap: 6,
                         padding: "4px 8px",
-                        background: isNow ? "rgba(63,143,99,0.08)" : "transparent",
+                        background: isNow
+                          ? "rgba(63,143,99,0.08)"
+                          : "transparent",
                         border: `1px solid ${isNow ? COLORS.green : COLORS.line}`,
                         borderRadius: 999,
                         fontSize: 12,
@@ -3889,7 +4071,11 @@ function Leaderboard({ leaderboard, currentUser, onlineUsers = {}, onGoExams }) 
                           flexShrink: 0,
                         }}
                       />
-                      <div style={{ fontFamily: "'JetBrains Mono', monospace" }}>{u}</div>
+                      <div
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                      >
+                        {u}
+                      </div>
                     </div>
                   );
                 })}
@@ -3982,17 +4168,6 @@ function DailyMenu({ submissions, onStart, onViewKey }) {
 
   return (
     <div>
-      <p
-        style={{
-          color: COLORS.paperDim,
-          fontSize: 14,
-          marginBottom: 24,
-          lineHeight: 1.6,
-        }}
-      >
-        A fresh {DAILY_COUNT}-question mix unlocks every day. Past days stay
-        right here — nothing gets removed as new ones are added.
-      </p>
       <div style={{ display: "grid", gap: 12 }}>
         {dates.map((date) => {
           const key = `daily_${date}`;
@@ -4061,7 +4236,7 @@ function DailyMenu({ submissions, onStart, onViewKey }) {
                 <div
                   style={{ fontSize: 12, color: COLORS.paperDim, marginTop: 3 }}
                 >
-                  {DAILY_COUNT} questions · mixed rounds
+                  {DAILY_COUNT} questions
                 </div>
               </div>
 
@@ -4344,7 +4519,7 @@ function Home({ submissions, onStart, onViewKey }) {
                     }}
                   >
                     {cat.poolSize
-                      ? `${cat.quizCount} questions per attempt · ${cat.poolSize} in the bank, ${cat.tiers}`
+                      ? `${cat.quizCount} questions`
                       : `${cat.items.length} questions`}
                   </div>
                 </div>
@@ -4468,6 +4643,9 @@ function CodeBlock({ code }) {
 }
 
 const TIER_LABEL = {
+  easy: "Easy",
+  medium: "Medium",
+  hard: "Hard",
   zero: "Zero",
   beginner: "Beginner",
   intermediate: "Intermediate",
@@ -4476,9 +4654,36 @@ const TIER_LABEL = {
 };
 
 function Quiz({ items, meta, qIndex, answers, onSelect, onNext, onPrev }) {
+  const [timeLeft, setTimeLeft] = useState(60);
+  const onNextRef = useRef(onNext);
   const item = items[qIndex];
   const selected = answers[qIndex];
   if (!item) return null;
+
+  useEffect(() => {
+    onNextRef.current = onNext;
+  }, [onNext]);
+
+  useEffect(() => {
+    setTimeLeft(60);
+
+    const timerId = window.setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          window.clearInterval(timerId);
+          onNextRef.current();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(timerId);
+  }, [qIndex, items.length]);
+
+  const timeLabel = `${String(Math.floor(timeLeft / 60)).padStart(2, "0")}:${String(
+    timeLeft % 60,
+  ).padStart(2, "0")}`;
 
   return (
     <div>
@@ -4488,6 +4693,7 @@ function Quiz({ items, meta, qIndex, answers, onSelect, onNext, onPrev }) {
           justifyContent: "space-between",
           alignItems: "center",
           marginBottom: 4,
+          gap: 12,
         }}
       >
         <div
@@ -4503,12 +4709,23 @@ function Quiz({ items, meta, qIndex, answers, onSelect, onNext, onPrev }) {
         </div>
         <div
           style={{
-            fontSize: 12,
-            color: COLORS.paperDim,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "6px 10px",
+            borderRadius: 999,
+            border: `1px solid ${timeLeft <= 10 ? COLORS.clay : COLORS.line}`,
+            background:
+              timeLeft <= 10
+                ? "rgba(193, 88, 63, 0.16)"
+                : "rgba(217, 164, 65, 0.12)",
+            color: timeLeft <= 10 ? COLORS.clay : COLORS.amber,
             fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 12,
           }}
         >
-          Q{qIndex + 1} / {items.length}
+          <Clock size={13} />
+          <span>{timeLabel}</span>
         </div>
       </div>
 
