@@ -17,6 +17,7 @@ import {
   LogOut,
   Trophy,
   Code2,
+  ClipboardList,
 } from "lucide-react";
 
 const LOGO_DATA_URI =
@@ -3207,7 +3208,7 @@ export default function QuizApp() {
     };
     await set(`submission_${currentUser}_${category}`, record, true);
     setSubmissions((prev) => ({ ...prev, [category]: record }));
-    setView("result");
+    setView("key");
     refreshLeaderboardEntry(currentUser);
   };
 
@@ -3542,6 +3543,8 @@ export default function QuizApp() {
 
           {view === "ide" && <PythonIde />}
 
+          {view === "assignments" && <Assignments />}
+
           {view === "quiz" && category && (
             <Quiz
               items={activeItems}
@@ -3585,6 +3588,11 @@ export default function QuizApp() {
               category={category}
               record={submissions[category]}
               now={now}
+              onRetake={
+                category.startsWith("daily_")
+                  ? undefined
+                  : () => startQuiz(category)
+              }
               onHome={() =>
                 setView(category.startsWith("daily_") ? "daily" : "answersMenu")
               }
@@ -3610,6 +3618,63 @@ export default function QuizApp() {
               onViewLeaderboard={() => setView("leaderboard")}
             />
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Assignments() {
+  return (
+    <div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          marginBottom: 6,
+        }}
+      >
+        <ClipboardList size={20} color={COLORS.amber} />
+        <div
+          style={{
+            fontFamily: "'Spectral', serif",
+            fontSize: 22,
+            fontWeight: 700,
+          }}
+        >
+          Assignments
+        </div>
+      </div>
+      <p
+        style={{
+          color: COLORS.paperDim,
+          fontSize: 13,
+          marginBottom: 28,
+          lineHeight: 1.6,
+        }}
+      >
+        Assignments will appear here once they are published by your instructor.
+      </p>
+      <div
+        style={{
+          textAlign: "center",
+          padding: "48px 24px",
+          border: `1px dashed ${COLORS.line}`,
+          borderRadius: 8,
+          color: COLORS.paperDim,
+        }}
+      >
+        <ClipboardList
+          size={36}
+          color={COLORS.line}
+          style={{ marginBottom: 14 }}
+        />
+        <div style={{ fontSize: 15, marginBottom: 6, color: COLORS.paper }}>
+          No assignments yet
+        </div>
+        <div style={{ fontSize: 13 }}>
+          Check back later — assignments will show up here when available.
         </div>
       </div>
     </div>
@@ -3763,6 +3828,7 @@ function Sidebar({ view, category, onNav, username, onLogout }) {
   const items = [
     { id: "home", label: "Exams", icon: BookOpen },
     { id: "daily", label: "Daily", icon: CalendarDays },
+    { id: "assignments", label: "Assignments", icon: ClipboardList },
     { id: "answersMenu", label: "Answers", icon: KeyRound },
     { id: "ide", label: "Python IDE", icon: Code2 },
     { id: "leaderboard", label: "Leaders", icon: Trophy },
@@ -5730,7 +5796,7 @@ const btnGhost = {
   alignItems: "center",
 };
 
-function AnswerKey({ category, record, now, onHome }) {
+function AnswerKey({ category, record, now, onHome, onRetake }) {
   const cat = getCategoryMeta(category);
   const keyItems = (record && record.items) || cat.items;
 
@@ -5751,103 +5817,153 @@ function AnswerKey({ category, record, now, onHome }) {
     );
   }
 
-  const unlockAt = record.submittedAt + REVEAL_MS;
-  const remaining = unlockAt - now;
-  const unlocked = remaining <= 0;
-
-  if (!unlocked) {
-    return (
-      <div style={{ textAlign: "center", padding: "20px 0" }}>
-        <div
-          style={{
-            margin: "20px auto",
-            width: 220,
-            padding: "28px 20px",
-            border: `1.5px dashed ${COLORS.amber}`,
-            borderRadius: 10,
-            background: "rgba(217,164,65,0.06)",
-          }}
-        >
-          <Lock size={28} color={COLORS.amber} style={{ marginBottom: 10 }} />
-          <div
-            style={{
-              fontSize: 11,
-              letterSpacing: 2,
-              color: COLORS.amber,
-              fontFamily: "'JetBrains Mono', monospace",
-            }}
-          >
-            SEALED
-          </div>
-          <div
-            style={{
-              fontFamily: "'Spectral', serif",
-              fontSize: 17,
-              margin: "8px 0 2px",
-            }}
-          >
-            {cat.label} answer key
-          </div>
-          <div
-            style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: 24,
-              fontWeight: 700,
-              marginTop: 10,
-              color: COLORS.paper,
-            }}
-          >
-            {formatCountdown(remaining)}
-          </div>
-          <div style={{ fontSize: 11, color: COLORS.paperDim, marginTop: 4 }}>
-            until unlock
-          </div>
-        </div>
-        <p
-          style={{
-            color: COLORS.paperDim,
-            fontSize: 13,
-            maxWidth: 380,
-            margin: "16px auto 24px",
-          }}
-        >
-          You already know your score:{" "}
-          <strong style={{ color: COLORS.paper }}>
-            {record.score}/{record.total}
-          </strong>
-          . Correct-answer details reveal 24 hours after submission.
-        </p>
-        <button onClick={onHome} style={btnGhost}>
-          Back to exams
-        </button>
-      </div>
-    );
-  }
+  // Only show questions the user actually submitted (answered)
+  const answeredIndices = Object.keys(record.answers).map(Number);
+  const submittedCount = answeredIndices.length;
+  const correctCount = answeredIndices.filter(
+    (i) => record.answers[i] === keyItems[i]?.correct
+  ).length;
+  const pct =
+    submittedCount > 0 ? Math.round((correctCount / submittedCount) * 100) : 0;
 
   return (
     <div>
+      {/* Score summary header */}
       <div
         style={{
+          background: COLORS.inkSoft,
+          border: `1px solid ${COLORS.line}`,
+          borderRadius: 10,
+          padding: "18px 22px",
+          marginBottom: 22,
           display: "flex",
           alignItems: "center",
-          gap: 8,
-          marginBottom: 20,
-          color: COLORS.green,
+          gap: 20,
+          flexWrap: "wrap",
         }}
       >
-        <Unlock size={16} />
-        <span
+        <div
           style={{
-            fontSize: 12,
-            letterSpacing: 1,
-            fontFamily: "'JetBrains Mono', monospace",
+            width: 64,
+            height: 64,
+            borderRadius: "50%",
+            border: `3px solid ${pct >= 50 ? COLORS.green : COLORS.clay}`,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
           }}
         >
-          ANSWER KEY UNSEALED
-        </span>
+          <div
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 18,
+              fontWeight: 700,
+              color: pct >= 50 ? COLORS.green : COLORS.clay,
+              lineHeight: 1,
+            }}
+          >
+            {pct}%
+          </div>
+        </div>
+        <div style={{ flex: 1, minWidth: 160 }}>
+          <div
+            style={{
+              fontFamily: "'Spectral', serif",
+              fontSize: 18,
+              fontWeight: 600,
+              marginBottom: 4,
+            }}
+          >
+            {cat.label} — Answer Key
+          </div>
+          <div
+            style={{
+              display: "flex",
+              gap: 18,
+              fontSize: 13,
+              flexWrap: "wrap",
+            }}
+          >
+            <span>
+              <span style={{ color: COLORS.paperDim }}>Submitted: </span>
+              <span
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  color: COLORS.paper,
+                }}
+              >
+                {submittedCount}/{record.total}
+              </span>
+            </span>
+            <span>
+              <span style={{ color: COLORS.paperDim }}>Correct: </span>
+              <span
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  color: COLORS.green,
+                }}
+              >
+                {correctCount}
+              </span>
+            </span>
+            <span>
+              <span style={{ color: COLORS.paperDim }}>Wrong: </span>
+              <span
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  color: COLORS.clay,
+                }}
+              >
+                {submittedCount - correctCount}
+              </span>
+            </span>
+            <span>
+              <span style={{ color: COLORS.paperDim }}>Skipped: </span>
+              <span
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  color: COLORS.paperDim,
+                }}
+              >
+                {record.total - submittedCount}
+              </span>
+            </span>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {onRetake && (
+            <button
+              onClick={onRetake}
+              style={{ ...btnGhost, display: "flex", alignItems: "center", gap: 6 }}
+            >
+              <RotateCcw size={13} /> Retake
+            </button>
+          )}
+          <button onClick={onHome} style={btnGhost}>
+            All exams
+          </button>
+        </div>
       </div>
+
+      {/* Only the answered questions */}
+      <div
+        style={{
+          fontSize: 11,
+          letterSpacing: 2,
+          color: COLORS.paperDim,
+          textTransform: "uppercase",
+          marginBottom: 14,
+        }}
+      >
+        {submittedCount} question{submittedCount !== 1 ? "s" : ""} submitted
+      </div>
+
       <div style={{ display: "grid", gap: 14 }}>
-        {keyItems.map((item, i) => {
+        {answeredIndices.map((i) => {
+          const item = keyItems[i];
+          if (!item) return null;
           const userAns = record.answers[i];
           const isCorrect = userAns === item.correct;
           return (
@@ -5855,7 +5971,11 @@ function AnswerKey({ category, record, now, onHome }) {
               key={i}
               style={{
                 background: COLORS.inkSoft,
-                border: `1px solid ${COLORS.line}`,
+                border: `1px solid ${
+                  isCorrect
+                    ? "rgba(63,143,99,0.45)"
+                    : "rgba(193,88,63,0.45)"
+                }`,
                 borderRadius: 8,
                 padding: 16,
               }}
@@ -5867,7 +5987,9 @@ function AnswerKey({ category, record, now, onHome }) {
                   gap: 10,
                 }}
               >
-                <div style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.5 }}>
+                <div
+                  style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.5 }}
+                >
                   {`Q${i + 1}. ${item.q}`}
                 </div>
                 {isCorrect ? (
@@ -5895,10 +6017,7 @@ function AnswerKey({ category, record, now, onHome }) {
                 </div>
                 {!isCorrect && (
                   <div style={{ color: COLORS.clay, marginTop: 2 }}>
-                    Your answer:{" "}
-                    {userAns !== undefined
-                      ? item.opts[userAns]
-                      : "Not answered"}
+                    Your answer: {item.opts[userAns]}
                   </div>
                 )}
               </div>
@@ -5906,7 +6025,22 @@ function AnswerKey({ category, record, now, onHome }) {
           );
         })}
       </div>
+
       <div style={{ textAlign: "center", marginTop: 24 }}>
+        {onRetake && (
+          <button
+            onClick={onRetake}
+            style={{
+              ...btnGhost,
+              marginRight: 10,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <RotateCcw size={13} /> Retake
+          </button>
+        )}
         <button onClick={onHome} style={btnGhost}>
           Back to exams
         </button>
