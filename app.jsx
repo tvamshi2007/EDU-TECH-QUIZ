@@ -3711,14 +3711,18 @@ function initPyodide() {
 }
 
 // ─── Piston API runner (C) ────────────────────────────────────────────────────
+// Piston runtimes: c → "10.2.0" (gcc), confirmed from /api/v2/piston/runtimes
+const PISTON_VERSIONS = { c: "10.2.0" };
+
 async function runWithPiston(language, code, stdin = "") {
+  const version = PISTON_VERSIONS[language] || "10.2.0";
   const res = await fetch("https://emkc.org/api/v2/piston/execute", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       language,
-      version: "*",   // always use latest available
-      files: [{ name: language === "c" ? "main.c" : "main.cpp", content: code }],
+      version,
+      files: [{ name: "main.c", content: code }],
       stdin,
       compile_timeout: 15000,
       run_timeout: 10000,
@@ -3831,27 +3835,30 @@ _out.getvalue()
     setOutput("");
     try {
       const result = await runWithPiston("c", codes.c, stdin);
-      // Piston returns { compile?: {stdout, stderr, code}, run: {stdout, stderr, code} }
-      const compileStderr = result?.compile?.stderr || "";
-      const compileStdout = result?.compile?.stdout || "";
-      if (compileStderr) {
-        setOutput("Compile error:\n" + compileStderr + (compileStdout ? "\n" + compileStdout : ""));
+
+      // Piston always returns { compile: {stdout,stderr,code,signal}, run: {stdout,stderr,code,signal} }
+      // for compiled languages. A non-zero compile.code means compilation failed.
+      const compile = result?.compile;
+      if (compile && compile.code !== 0) {
+        const msg = (compile.stderr || compile.stdout || "Unknown compile error").trim();
+        setOutput("Compile error:\n" + msg);
         setStatus("error");
         setStatusMsg("Compile error");
         return;
       }
+
       const run = result?.run || {};
-      const exitCode = run.code ?? 0;
-      const out =
-        (run.stdout || "") +
-        (run.stderr ? (run.stdout ? "\n" : "") + "stderr:\n" + run.stderr : "");
-      setOutput(out || "(no output)");
+      const exitCode = typeof run.code === "number" ? run.code : 0;
+      const stdout = run.stdout || "";
+      const stderr = run.stderr || "";
+      const combined = stdout + (stderr ? (stdout ? "\nstderr:\n" : "stderr:\n") + stderr : "");
+      setOutput(combined || "(no output)");
       setStatus(exitCode === 0 ? "done" : "error");
       setStatusMsg(exitCode === 0 ? "Exited 0" : `Exited ${exitCode}`);
     } catch (e) {
-      setOutput(String(e));
+      setOutput(`Network error — could not reach the compiler.\n\nDetails: ${e.message}`);
       setStatus("error");
-      setStatusMsg("Network error — check your connection");
+      setStatusMsg("Network error");
     }
   };
 
