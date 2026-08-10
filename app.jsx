@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { getMemberDisplayName } from "./src/memberName";
 import {
   Lock,
   Unlock,
@@ -1982,6 +1983,144 @@ const TECH_POOL_FLAT = TECH_LEVEL_ORDER.flatMap(
   (level) => TECH_LEVEL_POOL[level],
 );
 
+// --- Technical (C) question bank ----------------------------------
+const C_POOL = {
+  zero: [
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() { printf("%d", 2 + 3); return 0; }`,
+      opts: [`2`, `3`, `5`, `Error`],
+      correct: 2,
+    },
+    {
+      q: `What is the output of the following code?`,
+      code: `#include <stdio.h>
+int main() { printf("%d", 5 / 2); return 0; }`,
+      opts: [`2`, `2.5`, `3`, `Error`],
+      correct: 0,
+    },
+    {
+      q: `Which header is required for printf in C?`,
+      opts: [`<stdlib.h>`, `<stdio.h>`, `<string.h>`, `<math.h>`],
+      correct: 1,
+    },
+  ],
+  beginner: [
+    {
+      q: `What does the following code print?`,
+      code: `#include <stdio.h>
+int main(){ int a = 5; a += 3; printf("%d", a); return 0; }`,
+      opts: [`5`, `8`, `3`, `Error`],
+      correct: 1,
+    },
+    {
+      q: `Which of these is the correct way to declare a pointer to int?`,
+      opts: [`int p;`, `int *p;`, `p int*;`, `pointer<int> p;`],
+      correct: 1,
+    },
+    {
+      q: `What is the correct file extension for C source files?`,
+      opts: [`.cpp`, `.c`, `.py`, `.cs`],
+      correct: 1,
+    },
+  ],
+  intermediate: [
+    {
+      q: `What is the output of the following code?`,
+      code: `#include <stdio.h>
+int main(){ int a = 3; int b = a++; printf("%d %d", a, b); return 0; }`,
+      opts: [`4 3`, `3 4`, `3 3`, `4 4`],
+      correct: 0,
+    },
+    {
+      q: `Which function is used to dynamically allocate memory in C?`,
+      opts: [`alloc()`, `malloc()`, `new()`, `create()`],
+      correct: 1,
+    },
+    {
+      q: `What is the result of comparing two pointers that point to different objects?`,
+      opts: [
+        `They are equal`,
+        `Undefined`,
+        `They compare by address`,
+        `Compiler error`,
+      ],
+      correct: 2,
+    },
+  ],
+  advanced: [
+    {
+      q: `What does the \"static\" keyword do for a local variable in C?`,
+      opts: [
+        `Allocates on heap`,
+        `Persists value across calls`,
+        `Makes it global`,
+        `Prevents modification`,
+      ],
+      correct: 1,
+    },
+    {
+      q: `Which of the following leads to undefined behavior in C?`,
+      opts: [
+        `Dereferencing NULL pointer`,
+        `Using sizeof on an array`,
+        `Declaring a struct`,
+        `Including a header twice`,
+      ],
+      correct: 0,
+    },
+    {
+      q: `Which header provides memcpy?`,
+      opts: [`<stdio.h>`, `<string.h>`, `<stdlib.h>`, `<memory.h>`],
+      correct: 1,
+    },
+  ],
+  pro: [
+    {
+      q: `Which of these is true about the expression \"i++ > ++i\" in C?`,
+      opts: [
+        `Well-defined`,
+        `Undefined behaviour`,
+        `Always false`,
+        `Always true`,
+      ],
+      correct: 1,
+    },
+    {
+      q: `What is the main reason to use \"volatile\" in a variable declaration?`,
+      opts: [
+        `Prevent compiler optimizations that assume value doesn't change externally`,
+        `Make it read-only`,
+        `Allocate in registers`,
+        `Increase precision`,
+      ],
+      correct: 0,
+    },
+  ],
+};
+
+const C_QUESTIONS = Object.values(C_POOL).flatMap((arr) => arr);
+const cLevelRng = mulberry32(hashStr("c-levels"));
+const shuffledCQuestions = [...C_QUESTIONS];
+for (let i = shuffledCQuestions.length - 1; i > 0; i--) {
+  const j = Math.floor(cLevelRng() * (i + 1));
+  [shuffledCQuestions[i], shuffledCQuestions[j]] = [
+    shuffledCQuestions[j],
+    shuffledCQuestions[i],
+  ];
+}
+const baseCSize = Math.floor(
+  shuffledCQuestions.length / TECH_LEVEL_ORDER.length,
+);
+const extraC = shuffledCQuestions.length % TECH_LEVEL_ORDER.length;
+const C_LEVEL_POOL = {};
+TECH_LEVEL_ORDER.forEach((level, index) => {
+  const size = baseCSize + (index < extraC ? 1 : 0);
+  C_LEVEL_POOL[level] = shuffledCQuestions.splice(0, size);
+});
+
+const C_POOL_FLAT = TECH_LEVEL_ORDER.flatMap((level) => C_LEVEL_POOL[level]);
 const QUESTIONS = {
   aptitude: {
     label: "Aptitude",
@@ -2331,6 +2470,16 @@ const QUESTIONS = {
       return TECH_POOL_FLAT;
     },
   },
+  technical_c: {
+    label: "Technical · C",
+    code: "TCH-C-01",
+    tiers: "Easy → Medium → Hard",
+    quizCount: 60,
+    poolSize: C_QUESTIONS.length,
+    get items() {
+      return C_POOL_FLAT;
+    },
+  },
 };
 
 const REVEAL_MS = 0;
@@ -2527,7 +2676,7 @@ export default function QuizApp() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const register = async (username, password) => {
+  const register = async (username, password, displayName) => {
     setAuthError("");
     const uname = username.trim();
     if (!uname || !password) {
@@ -2545,7 +2694,11 @@ export default function QuizApp() {
       setAuthBusy(false);
       return;
     }
-    const account = { password: encode(password), createdAt: Date.now() };
+    const account = {
+      password: encode(password),
+      createdAt: Date.now(),
+      displayName: (displayName || "").trim() || uname,
+    };
     await set(`user:${uname}`, account, true);
     await set("session", { username: uname }, false);
     setAuthBusy(false);
@@ -2691,7 +2844,15 @@ export default function QuizApp() {
       const rows = [];
       for (const key of listing.keys) {
         const r = await get(key, true);
-        if (r) rows.push({ username: key.slice("leaderboard:".length), ...r });
+        if (r) {
+          const username = key.slice("leaderboard:".length);
+          const account = await get(`user:${username}`, true);
+          rows.push({
+            username,
+            displayName: getMemberDisplayName(account, username),
+            ...r,
+          });
+        }
       }
       rows.sort((a, b) => b.pct - a.pct || b.totalCorrect - a.totalCorrect);
       setLeaderboard(rows);
@@ -3364,6 +3525,7 @@ function Sidebar({ view, category, onNav, username, onLogout }) {
 
 function AuthForm({ mode, busy, error, onSubmit, onSwitch }) {
   const [username, setUsername] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const isRegister = mode === "register";
@@ -3373,7 +3535,7 @@ function AuthForm({ mode, busy, error, onSubmit, onSwitch }) {
     if (isRegister && password !== confirm) {
       return;
     }
-    onSubmit(username, password);
+    onSubmit(username, password, isRegister ? displayName : undefined);
   };
 
   const mismatch = isRegister && confirm.length > 0 && password !== confirm;
@@ -3404,14 +3566,28 @@ function AuthForm({ mode, busy, error, onSubmit, onSwitch }) {
       )}
 
       <div onSubmit={handleSubmit}>
-        <FieldLabel text="Enter Your Name" />
+        <FieldLabel text={isRegister ? "Login username" : "Enter Your Name"} />
         <input
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="Enter Your Name"
+          placeholder={
+            isRegister ? "Choose a login username" : "Enter Your Name"
+          }
           style={inputStyle}
           autoCapitalize="none"
         />
+
+        {isRegister && (
+          <>
+            <FieldLabel text="Display name" />
+            <input
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="How you want to appear on leaderboard"
+              style={inputStyle}
+            />
+          </>
+        )}
 
         <FieldLabel text="Password" />
         <input
@@ -4123,7 +4299,7 @@ function Leaderboard({
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {row.username}
+                    {row.displayName || row.username}
                     {isMe && " (you)"}
                   </div>
                   <div
