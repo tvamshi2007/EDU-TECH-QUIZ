@@ -3687,41 +3687,47 @@ function Assignments() {
 }
 
 // ─── Pyodide loader (singleton) ──────────────────────────────────────────────
+// NOTE: wrapper is named initPyodide to avoid shadowing window.loadPyodide
 let _pyodidePromise = null;
-function loadPyodide() {
+function initPyodide() {
   if (_pyodidePromise) return _pyodidePromise;
   _pyodidePromise = new Promise((resolve, reject) => {
-    if (window.loadPyodide) { resolve(); return; }
+    if (window._pyodideReady) { resolve(); return; }
     const script = document.createElement("script");
     script.src = "https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js";
     script.onload = resolve;
-    script.onerror = reject;
+    script.onerror = () => reject(new Error("Failed to load Pyodide script"));
     document.head.appendChild(script);
   }).then(async () => {
     if (!window._pyodideInstance) {
+      // window.loadPyodide is injected by the Pyodide script above
       window._pyodideInstance = await window.loadPyodide({
         indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.1/full/",
       });
+      window._pyodideReady = true;
     }
   });
   return _pyodidePromise;
 }
 
-// ─── Piston API runner (C / C++) ─────────────────────────────────────────────
-async function runWithPiston(language, version, code, stdin = "") {
+// ─── Piston API runner (C) ────────────────────────────────────────────────────
+async function runWithPiston(language, code, stdin = "") {
   const res = await fetch("https://emkc.org/api/v2/piston/execute", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       language,
-      version,
-      files: [{ name: "main." + (language === "c" ? "c" : "cpp"), content: code }],
+      version: "*",   // always use latest available
+      files: [{ name: language === "c" ? "main.c" : "main.cpp", content: code }],
       stdin,
-      compile_timeout: 10000,
-      run_timeout: 5000,
+      compile_timeout: 15000,
+      run_timeout: 10000,
     }),
   });
-  if (!res.ok) throw new Error(`Piston error ${res.status}`);
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Piston API error ${res.status}${text ? ": " + text : ""}`);
+  }
   return res.json();
 }
 
@@ -3785,30 +3791,31 @@ function LanguageIde() {
     setStatusMsg("Loading Pyodide runtime…");
     setOutput("");
     try {
-      await loadPyodide();
+      await initPyodide();
       const py = window._pyodideInstance;
       setStatus("running");
       setStatusMsg("Running…");
 
-      // Capture stdout/stderr
-      py.globals.set("_captured_output", []);
-      const wrapped = `
-import sys
-from io import StringIO
-_buf = StringIO()
-sys.stdout = _buf
-sys.stderr = _buf
+      // Redirect stdout/stderr inside Python, collect into a string
+      const captureCode = `
+import sys, traceback
+from io import StringIO as _SIO
+_out = _SIO()
+_old_out, _old_err = sys.stdout, sys.stderr
+sys.stdout = sys.stderr = _out
 try:
-    exec(${JSON.stringify(codes.python)})
-except Exception as e:
-    print(f"Error: {e}")
-sys.stdout = sys.__stdout__
-sys.stderr = sys.__stderr__
-_captured_output.append(_buf.getvalue())
+    exec(compile(${JSON.stringify(codes.python)}, "<stdin>", "exec"))
+except SystemExit:
+    pass
+except Exception:
+    traceback.print_exc()
+finally:
+    sys.stdout = _old_out
+    sys.stderr = _old_err
+_out.getvalue()
 `;
-      await py.runPythonAsync(wrapped);
-      const captured = py.globals.get("_captured_output").toJs();
-      setOutput(captured[0] ?? "(no output)");
+      const result = await py.runPythonAsync(captureCode);
+      setOutput(result ?? "(no output)");
       setStatus("done");
       setStatusMsg("Finished");
     } catch (e) {
@@ -3823,23 +3830,28 @@ _captured_output.append(_buf.getvalue())
     setStatusMsg("Sending to compiler…");
     setOutput("");
     try {
-      const result = await runWithPiston("c", "10.2.0", codes.c, stdin);
-      const compile = result.compile || {};
-      if (compile.stderr) {
-        setOutput("Compile error:\n" + compile.stderr);
+      const result = await runWithPiston("c", codes.c, stdin);
+      // Piston returns { compile?: {stdout, stderr, code}, run: {stdout, stderr, code} }
+      const compileStderr = result?.compile?.stderr || "";
+      const compileStdout = result?.compile?.stdout || "";
+      if (compileStderr) {
+        setOutput("Compile error:\n" + compileStderr + (compileStdout ? "\n" + compileStdout : ""));
         setStatus("error");
         setStatusMsg("Compile error");
         return;
       }
-      const run = result.run || {};
-      const out = (run.stdout || "") + (run.stderr ? "\nstderr:\n" + run.stderr : "");
+      const run = result?.run || {};
+      const exitCode = run.code ?? 0;
+      const out =
+        (run.stdout || "") +
+        (run.stderr ? (run.stdout ? "\n" : "") + "stderr:\n" + run.stderr : "");
       setOutput(out || "(no output)");
-      setStatus(run.code === 0 ? "done" : "error");
-      setStatusMsg(run.code === 0 ? `Exited 0` : `Exited ${run.code}`);
+      setStatus(exitCode === 0 ? "done" : "error");
+      setStatusMsg(exitCode === 0 ? "Exited 0" : `Exited ${exitCode}`);
     } catch (e) {
       setOutput(String(e));
       setStatus("error");
-      setStatusMsg("Network error");
+      setStatusMsg("Network error — check your connection");
     }
   };
 
