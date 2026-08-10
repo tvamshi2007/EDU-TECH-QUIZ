@@ -2929,9 +2929,15 @@ function formatCountdown(ms) {
 // producing the exact same quiz it always has, so history never changes.
 
 const DAILY_START = "2026-08-08";
-const DAILY_COUNT = 30;
-const DAILY_PER_CATEGORY = 10;
-const DAILY_CATEGORY_KEYS = ["aptitude", "verbal", "technical"];
+const DAILY_COUNT = 50;
+// Per-category question counts that sum to DAILY_COUNT (50)
+const DAILY_PER_CATEGORY = {
+  aptitude:    10,
+  verbal:      10,
+  technical:   15,
+  technical_c: 15,
+};
+const DAILY_CATEGORY_KEYS = ["aptitude", "verbal", "technical", "technical_c"];
 
 function todayStr() {
   const d = new Date();
@@ -2980,9 +2986,10 @@ function getDailyItems(dateStr) {
       const j = Math.floor(rng() * (i + 1));
       [pool[i], pool[j]] = [pool[j], pool[i]];
     }
+    const count = DAILY_PER_CATEGORY[key] ?? 10;
     picked.push(
       ...pool
-        .slice(0, DAILY_PER_CATEGORY)
+        .slice(0, count)
         .map((item) => ({ ...item, srcLabel: cat.label })),
     );
   }
