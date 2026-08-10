@@ -3710,29 +3710,30 @@ function initPyodide() {
   return _pyodidePromise;
 }
 
-// ─── Piston API runner (C) ────────────────────────────────────────────────────
-// Piston runtimes: c → "10.2.0" (gcc), confirmed from /api/v2/piston/runtimes
-const PISTON_VERSIONS = { c: "10.2.0" };
-
-async function runWithPiston(language, code, stdin = "") {
-  const version = PISTON_VERSIONS[language] || "10.2.0";
-  const res = await fetch("https://emkc.org/api/v2/piston/execute", {
+// ─── Wandbox API runner (C) ───────────────────────────────────────────────────
+// Wandbox is a free, no-auth-required online compiler service.
+// C compiler: gcc-13.2.0-c  Docs: https://wandbox.org/api/compile.json
+async function runWithWandbox(code, stdin = "") {
+  const body = {
+    compiler: "gcc-13.2.0-c",
+    code,
+    stdin,
+    "compiler-option-raw": "-std=c11 -Wall",
+    "runtime-option-raw": "",
+    save: false,
+  };
+  const res = await fetch("https://wandbox.org/api/compile.json", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      language,
-      version,
-      files: [{ name: "main.c", content: code }],
-      stdin,
-      compile_timeout: 15000,
-      run_timeout: 10000,
-    }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`Piston API error ${res.status}${text ? ": " + text : ""}`);
+    throw new Error(`Wandbox error ${res.status}${text ? ": " + text : ""}`);
   }
   return res.json();
+  // Response shape: { status, program_output, program_error, compiler_output,
+  //                   compiler_error, compiler_message, signal, ... }
 }
 
 // ─── Shared IDE shell ─────────────────────────────────────────────────────────
@@ -3834,29 +3835,34 @@ _out.getvalue()
     setStatusMsg("Sending to compiler…");
     setOutput("");
     try {
-      const result = await runWithPiston("c", codes.c, stdin);
+      const result = await runWithWandbox(codes.c, stdin);
+      // Wandbox response: { status, program_output, program_error,
+      //                     compiler_output, compiler_error, compiler_message }
+      // status "0" = success, non-zero or "CE" = compile error
+      const compileError = result.compiler_error || "";
+      const compileOutput = result.compiler_output || "";
 
-      // Piston always returns { compile: {stdout,stderr,code,signal}, run: {stdout,stderr,code,signal} }
-      // for compiled languages. A non-zero compile.code means compilation failed.
-      const compile = result?.compile;
-      if (compile && compile.code !== 0) {
-        const msg = (compile.stderr || compile.stdout || "Unknown compile error").trim();
+      // A compile error means no program ran
+      if (result.status === "CE" || (compileError && !result.program_output && !result.program_error)) {
+        const msg = (compileError || compileOutput || "Unknown compile error").trim();
         setOutput("Compile error:\n" + msg);
         setStatus("error");
         setStatusMsg("Compile error");
         return;
       }
 
-      const run = result?.run || {};
-      const exitCode = typeof run.code === "number" ? run.code : 0;
-      const stdout = run.stdout || "";
-      const stderr = run.stderr || "";
-      const combined = stdout + (stderr ? (stdout ? "\nstderr:\n" : "stderr:\n") + stderr : "");
+      // Program ran — show stdout + stderr
+      const stdout = result.program_output || "";
+      const stderr = result.program_error || "";
+      // Show compiler warnings if any (non-fatal)
+      const warnings = compileError ? "Compiler warnings:\n" + compileError + "\n\n" : "";
+      const combined = warnings + stdout + (stderr ? (stdout ? "\nstderr:\n" : "stderr:\n") + stderr : "");
+      const exitCode = parseInt(result.status, 10);
       setOutput(combined || "(no output)");
       setStatus(exitCode === 0 ? "done" : "error");
       setStatusMsg(exitCode === 0 ? "Exited 0" : `Exited ${exitCode}`);
     } catch (e) {
-      setOutput(`Network error — could not reach the compiler.\n\nDetails: ${e.message}`);
+      setOutput(`Could not reach the compiler.\n\nDetails: ${e.message}`);
       setStatus("error");
       setStatusMsg("Network error");
     }
@@ -4095,7 +4101,7 @@ _out.getvalue()
             )}
             {lang === "c" && status === "idle" && (
               <span style={{ fontSize: 11, color: COLORS.paperDim, marginLeft: "auto", opacity: 0.6 }}>
-                Compiled via Piston API
+                Compiled via Wandbox (gcc 13)
               </span>
             )}
           </div>
