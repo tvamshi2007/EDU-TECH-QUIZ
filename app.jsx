@@ -1983,142 +1983,540 @@ const TECH_POOL_FLAT = TECH_LEVEL_ORDER.flatMap(
   (level) => TECH_LEVEL_POOL[level],
 );
 
-// --- Technical (C) question bank ----------------------------------
+// --- Technical (C) question bank: 60 questions (20 Easy, 20 Medium, 20 Hard) --
 const C_POOL = {
-  zero: [
+  easy: [
+    // 1
     {
       q: `What is the output of the following C code?`,
       code: `#include <stdio.h>
 int main() { printf("%d", 2 + 3); return 0; }`,
-      opts: [`2`, `3`, `5`, `Error`],
+      opts: [`2`, `3`, `5`, `Compiler error`],
       correct: 2,
     },
+    // 2
     {
-      q: `What is the output of the following code?`,
+      q: `What is the output of the following C code?`,
       code: `#include <stdio.h>
 int main() { printf("%d", 5 / 2); return 0; }`,
-      opts: [`2`, `2.5`, `3`, `Error`],
+      opts: [`2`, `2.5`, `3`, `Compiler error`],
       correct: 0,
     },
+    // 3
     {
-      q: `Which header is required for printf in C?`,
+      q: `Which header file is required to use printf() in C?`,
       opts: [`<stdlib.h>`, `<stdio.h>`, `<string.h>`, `<math.h>`],
       correct: 1,
     },
-  ],
-  beginner: [
+    // 4
     {
-      q: `What does the following code print?`,
-      code: `#include <stdio.h>
-int main(){ int a = 5; a += 3; printf("%d", a); return 0; }`,
-      opts: [`5`, `8`, `3`, `Error`],
-      correct: 1,
-    },
-    {
-      q: `Which of these is the correct way to declare a pointer to int?`,
-      opts: [`int p;`, `int *p;`, `p int*;`, `pointer<int> p;`],
-      correct: 1,
-    },
-    {
-      q: `What is the correct file extension for C source files?`,
+      q: `What is the correct file extension for a C source file?`,
       opts: [`.cpp`, `.c`, `.py`, `.cs`],
       correct: 1,
     },
-  ],
-  intermediate: [
+    // 5
     {
-      q: `What is the output of the following code?`,
+      q: `What is the output of the following C code?`,
       code: `#include <stdio.h>
-int main(){ int a = 3; int b = a++; printf("%d %d", a, b); return 0; }`,
+int main() { int a = 10; a += 5; printf("%d", a); return 0; }`,
+      opts: [`5`, `10`, `15`, `Compiler error`],
+      correct: 2,
+    },
+    // 6
+    {
+      q: `Which keyword is used to define a constant in C?`,
+      opts: [`var`, `constant`, `const`, `final`],
+      correct: 2,
+    },
+    // 7
+    {
+      q: `What does the %d format specifier print in C?`,
+      opts: [`A float`, `A character`, `A string`, `An integer`],
+      correct: 3,
+    },
+    // 8
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() { printf("%d", 10 % 3); return 0; }`,
+      opts: [`0`, `1`, `3`, `Compiler error`],
+      correct: 1,
+    },
+    // 9
+    {
+      q: `Which of the following correctly declares an integer variable in C?`,
+      opts: [`integer x;`, `int x;`, `Int x;`, `var x;`],
+      correct: 1,
+    },
+    // 10
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() { int x = 5; printf("%d", x * 2); return 0; }`,
+      opts: [`5`, `7`, `10`, `Compiler error`],
+      correct: 2,
+    },
+    // 11
+    {
+      q: `Which symbol is used to end a statement in C?`,
+      opts: [`.`, `:`, `;`, `}`],
+      correct: 2,
+    },
+    // 12
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() { char c = 'A'; printf("%c", c); return 0; }`,
+      opts: [`65`, `A`, `a`, `Compiler error`],
+      correct: 1,
+    },
+    // 13
+    {
+      q: `What does the return type void mean for a function in C?`,
+      opts: [
+        `The function returns 0`,
+        `The function returns nothing`,
+        `The function returns a pointer`,
+        `The function never ends`,
+      ],
+      correct: 1,
+    },
+    // 14
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() { int a = 4, b = 3; printf("%d", a - b); return 0; }`,
+      opts: [`7`, `1`, `12`, `Compiler error`],
+      correct: 1,
+    },
+    // 15
+    {
+      q: `Which of the following is NOT a valid C data type?`,
+      opts: [`int`, `float`, `bool`, `string`],
+      correct: 3,
+    },
+    // 16
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() { printf("%f", 1.5 + 2.5); return 0; }`,
+      opts: [`3`, `4.0`, `4.000000`, `Compiler error`],
+      correct: 2,
+    },
+    // 17
+    {
+      q: `How do you write a single-line comment in C?`,
+      opts: [`/* comment */`, `// comment`, `# comment`, `-- comment`],
+      correct: 1,
+    },
+    // 18
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() { int x = 7; if (x > 5) printf("yes"); return 0; }`,
+      opts: [`no`, `yes`, `7`, `Compiler error`],
+      correct: 1,
+    },
+    // 19
+    {
+      q: `Which operator is used for assignment in C?`,
+      opts: [`==`, `=>`, `=`, `:=`],
+      correct: 2,
+    },
+    // 20
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() { int i; for(i = 0; i < 3; i++) printf("%d ", i); return 0; }`,
+      opts: [`1 2 3`, `0 1 2`, `0 1 2 3`, `Compiler error`],
+      correct: 1,
+    },
+  ],
+
+  medium: [
+    // 1
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() { int a = 3; int b = a++; printf("%d %d", a, b); return 0; }`,
       opts: [`4 3`, `3 4`, `3 3`, `4 4`],
       correct: 0,
     },
+    // 2
     {
       q: `Which function is used to dynamically allocate memory in C?`,
       opts: [`alloc()`, `malloc()`, `new()`, `create()`],
       correct: 1,
     },
+    // 3
     {
-      q: `What is the result of comparing two pointers that point to different objects?`,
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() { int a = 5; printf("%d", ++a); return 0; }`,
+      opts: [`5`, `6`, `7`, `Compiler error`],
+      correct: 1,
+    },
+    // 4
+    {
+      q: `Which of the following correctly declares a pointer to an int in C?`,
+      opts: [`int p;`, `int *p;`, `p int*;`, `pointer<int> p;`],
+      correct: 1,
+    },
+    // 5
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() { int arr[3] = {10, 20, 30}; printf("%d", arr[1]); return 0; }`,
+      opts: [`10`, `20`, `30`, `Compiler error`],
+      correct: 1,
+    },
+    // 6
+    {
+      q: `What does scanf() do in C?`,
       opts: [
-        `They are equal`,
-        `Undefined`,
-        `They compare by address`,
-        `Compiler error`,
+        `Prints formatted output`,
+        `Reads formatted input from stdin`,
+        `Scans the file system`,
+        `Allocates memory`,
+      ],
+      correct: 1,
+    },
+    // 7
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int add(int a, int b) { return a + b; }
+int main() { printf("%d", add(3, 4)); return 0; }`,
+      opts: [`3`, `4`, `7`, `Compiler error`],
+      correct: 2,
+    },
+    // 8
+    {
+      q: `Which header file provides strlen()?`,
+      opts: [`<stdio.h>`, `<stdlib.h>`, `<string.h>`, `<math.h>`],
+      correct: 2,
+    },
+    // 9
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() { int x = 10; int *p = &x; printf("%d", *p); return 0; }`,
+      opts: [`x`, `10`, `Address of x`, `Compiler error`],
+      correct: 1,
+    },
+    // 10
+    {
+      q: `What is the size of an int on most 64-bit systems in C?`,
+      opts: [`2 bytes`, `4 bytes`, `8 bytes`, `Depends on compiler`],
+      correct: 1,
+    },
+    // 11
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() { int x = 5; x *= 3; printf("%d", x); return 0; }`,
+      opts: [`8`, `15`, `3`, `Compiler error`],
+      correct: 1,
+    },
+    // 12
+    {
+      q: `Which loop is guaranteed to execute its body at least once in C?`,
+      opts: [`for`, `while`, `do-while`, `foreach`],
+      correct: 2,
+    },
+    // 13
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() { int i = 0; while(i < 3) { printf("%d", i); i++; } return 0; }`,
+      opts: [`123`, `012`, `0 1 2`, `Compiler error`],
+      correct: 1,
+    },
+    // 14
+    {
+      q: `What does the break statement do inside a loop in C?`,
+      opts: [
+        `Restarts the loop`,
+        `Skips the current iteration`,
+        `Exits the loop immediately`,
+        `Exits the program`,
       ],
       correct: 2,
     },
-  ],
-  advanced: [
+    // 15
     {
-      q: `What does the \"static\" keyword do for a local variable in C?`,
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() { int a = 6, b = 4; printf("%d", a & b); return 0; }`,
+      opts: [`2`, `4`, `6`, `10`],
+      correct: 1,
+    },
+    // 16
+    {
+      q: `Which keyword is used to define a structure in C?`,
+      opts: [`class`, `object`, `struct`, `record`],
+      correct: 2,
+    },
+    // 17
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() { char s[] = "Hello"; printf("%lu", sizeof(s)); return 0; }`,
+      opts: [`5`, `6`, `Depends`, `Compiler error`],
+      correct: 1,
+    },
+    // 18
+    {
+      q: `In C, what is the default return type of main()?`,
+      opts: [`void`, `int`, `char`, `float`],
+      correct: 1,
+    },
+    // 19
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() { int a = 2; printf("%d", a << 2); return 0; }`,
+      opts: [`4`, `6`, `8`, `10`],
+      correct: 2,
+    },
+    // 20
+    {
+      q: `What does the continue statement do inside a loop in C?`,
       opts: [
-        `Allocates on heap`,
-        `Persists value across calls`,
-        `Makes it global`,
+        `Exits the loop`,
+        `Skips the rest of the current iteration and continues to the next`,
+        `Restarts the program`,
+        `Exits the function`,
+      ],
+      correct: 1,
+    },
+  ],
+
+  hard: [
+    // 1
+    {
+      q: `What does the static keyword do for a local variable in C?`,
+      opts: [
+        `Allocates it on the heap`,
+        `Persists its value across function calls`,
+        `Makes it visible globally`,
         `Prevents modification`,
       ],
       correct: 1,
     },
+    // 2
     {
       q: `Which of the following leads to undefined behavior in C?`,
       opts: [
-        `Dereferencing NULL pointer`,
+        `Dereferencing a NULL pointer`,
         `Using sizeof on an array`,
         `Declaring a struct`,
-        `Including a header twice`,
+        `Including a header twice with include guards`,
       ],
       correct: 0,
     },
+    // 3
     {
-      q: `Which header provides memcpy?`,
+      q: `Which header provides memcpy() in C?`,
       opts: [`<stdio.h>`, `<string.h>`, `<stdlib.h>`, `<memory.h>`],
       correct: 1,
     },
-  ],
-  pro: [
+    // 4
     {
-      q: `Which of these is true about the expression \"i++ > ++i\" in C?`,
+      q: `Which of these is true about the expression i++ > ++i in C?`,
       opts: [
-        `Well-defined`,
+        `Well-defined; equals false`,
         `Undefined behaviour`,
-        `Always false`,
-        `Always true`,
+        `Always evaluates to true`,
+        `Compiler error`,
       ],
       correct: 1,
     },
+    // 5
     {
-      q: `What is the main reason to use \"volatile\" in a variable declaration?`,
+      q: `What is the primary reason to declare a variable as volatile in C?`,
       opts: [
-        `Prevent compiler optimizations that assume value doesn't change externally`,
-        `Make it read-only`,
-        `Allocate in registers`,
-        `Increase precision`,
+        `Prevent the compiler from optimizing away reads/writes it may see as redundant`,
+        `Make the variable read-only`,
+        `Force the variable into a register`,
+        `Increase floating-point precision`,
       ],
       correct: 0,
+    },
+    // 6
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() {
+  int a = 5;
+  int *p = &a;
+  *p = 10;
+  printf("%d", a);
+  return 0;
+}`,
+      opts: [`5`, `10`, `Address of a`, `Compiler error`],
+      correct: 1,
+    },
+    // 7
+    {
+      q: `Which of the following correctly uses a function pointer in C?`,
+      opts: [
+        `int *fp(int);`,
+        `int (*fp)(int);`,
+        `*(int fp)(int);`,
+        `int fp*(int);`,
+      ],
+      correct: 1,
+    },
+    // 8
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() {
+  int arr[] = {1, 2, 3, 4, 5};
+  int *p = arr;
+  printf("%d", *(p + 2));
+  return 0;
+}`,
+      opts: [`1`, `2`, `3`, `Compiler error`],
+      correct: 2,
+    },
+    // 9
+    {
+      q: `What is a dangling pointer in C?`,
+      opts: [
+        `A pointer that has never been initialised`,
+        `A pointer that points to freed or out-of-scope memory`,
+        `A pointer to a global variable`,
+        `A pointer used in a struct`,
+      ],
+      correct: 1,
+    },
+    // 10
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+void f(int *x) { *x = 20; }
+int main() {
+  int a = 10;
+  f(&a);
+  printf("%d", a);
+  return 0;
+}`,
+      opts: [`10`, `20`, `0`, `Compiler error`],
+      correct: 1,
+    },
+    // 11
+    {
+      q: `Which storage class makes a variable visible only within its translation unit in C?`,
+      opts: [`extern`, `register`, `static`, `auto`],
+      correct: 2,
+    },
+    // 12
+    {
+      q: `What is the result of sizeof(char) in C, guaranteed by the standard?`,
+      opts: [`0`, `1`, `2`, `Platform-dependent`],
+      correct: 1,
+    },
+    // 13
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() {
+  int x = 0;
+  x = x++ + ++x;
+  printf("%d", x);
+  return 0;
+}`,
+      opts: [`1`, `2`, `Undefined behaviour`, `Compiler error`],
+      correct: 2,
+    },
+    // 14
+    {
+      q: `Which function releases dynamically allocated memory in C?`,
+      opts: [`delete()`, `release()`, `free()`, `dealloc()`],
+      correct: 2,
+    },
+    // 15
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() {
+  int a = 5, b = 10;
+  int *p = &a, *q = &b;
+  *p = *q;
+  printf("%d %d", a, b);
+  return 0;
+}`,
+      opts: [`5 10`, `10 10`, `5 5`, `Compiler error`],
+      correct: 1,
+    },
+    // 16
+    {
+      q: `What does the restrict keyword tell the compiler in C99?`,
+      opts: [
+        `The pointer is read-only`,
+        `No other pointer will alias the same memory during its scope`,
+        `The variable is thread-local`,
+        `The memory is allocated on the stack`,
+      ],
+      correct: 1,
+    },
+    // 17
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+static int count = 0;
+void inc() { count++; }
+int main() { inc(); inc(); inc(); printf("%d", count); return 0; }`,
+      opts: [`0`, `1`, `3`, `Compiler error`],
+      correct: 2,
+    },
+    // 18
+    {
+      q: `Which of the following correctly defines a typedef for a struct Point in C?`,
+      opts: [
+        `typedef struct { int x, y; } Point;`,
+        `define struct Point { int x, y; };`,
+        `struct typedef Point { int x, y; };`,
+        `type Point = struct { int x, y; };`,
+      ],
+      correct: 0,
+    },
+    // 19
+    {
+      q: `What is the output of the following C code?`,
+      code: `#include <stdio.h>
+int main() {
+  char *s = "Hello";
+  printf("%c", *(s + 1));
+  return 0;
+}`,
+      opts: [`H`, `e`, `l`, `Compiler error`],
+      correct: 1,
+    },
+    // 20
+    {
+      q: `What is the difference between calloc() and malloc() in C?`,
+      opts: [
+        `calloc allocates on stack; malloc on heap`,
+        `calloc initialises allocated memory to zero; malloc does not`,
+        `malloc takes two arguments; calloc takes one`,
+        `There is no difference`,
+      ],
+      correct: 1,
     },
   ],
 };
 
+// C_POOL keys already match TECH_LEVEL_ORDER ("easy", "medium", "hard"),
+// so map them directly — each tier keeps its 20 questions intact.
 const C_QUESTIONS = Object.values(C_POOL).flatMap((arr) => arr);
-const cLevelRng = mulberry32(hashStr("c-levels"));
-const shuffledCQuestions = [...C_QUESTIONS];
-for (let i = shuffledCQuestions.length - 1; i > 0; i--) {
-  const j = Math.floor(cLevelRng() * (i + 1));
-  [shuffledCQuestions[i], shuffledCQuestions[j]] = [
-    shuffledCQuestions[j],
-    shuffledCQuestions[i],
-  ];
-}
-const baseCSize = Math.floor(
-  shuffledCQuestions.length / TECH_LEVEL_ORDER.length,
-);
-const extraC = shuffledCQuestions.length % TECH_LEVEL_ORDER.length;
-const C_LEVEL_POOL = {};
-TECH_LEVEL_ORDER.forEach((level, index) => {
-  const size = baseCSize + (index < extraC ? 1 : 0);
-  C_LEVEL_POOL[level] = shuffledCQuestions.splice(0, size);
-});
+const C_LEVEL_POOL = {
+  easy: C_POOL.easy,
+  medium: C_POOL.medium,
+  hard: C_POOL.hard,
+};
 
 const C_POOL_FLAT = TECH_LEVEL_ORDER.flatMap((level) => C_LEVEL_POOL[level]);
 const QUESTIONS = {
@@ -4457,8 +4855,8 @@ function AnswersMenu({ submissions, now, onSelect, onGoExams }) {
           lineHeight: 1.6,
         }}
       >
-        Every round's answer key lives here. As soon as you submit a round, its
-        key unlocks with the correct answers next to yours.
+        Every round's answer key lives here. After you submit a round, the key
+        becomes available with the correct answers displayed next to yours.
       </p>
 
       {!anySubmitted && (
@@ -4634,17 +5032,6 @@ function AnswersMenu({ submissions, now, onSelect, onGoExams }) {
 function Home({ submissions, onStart, onViewKey }) {
   return (
     <div>
-      <p
-        style={{
-          color: COLORS.paperDim,
-          fontSize: 14,
-          marginBottom: 24,
-          lineHeight: 1.6,
-        }}
-      >
-        Three timed rounds. The moment you submit, your score and the full
-        answer key are both unlocked.
-      </p>
       <div style={{ display: "grid", gap: 16 }}>
         {Object.entries(QUESTIONS).map(([key, cat]) => {
           const sub = submissions[key];
@@ -5169,8 +5556,8 @@ function Result({
             lineHeight: 1.6,
           }}
         >
-          Your score is final. The detailed answer key — correct answers next to
-          your own — is unlocked now.
+          Your score is final. The detailed answer key shows the correct answers
+          alongside your own responses.
         </p>
         <div
           style={{
