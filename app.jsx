@@ -3923,7 +3923,6 @@ function Sidebar({ view, category, onNav, username, onLogout }) {
 
 function AuthForm({ mode, busy, error, onSubmit, onSwitch }) {
   const [username, setUsername] = useState("");
-  const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const isRegister = mode === "register";
@@ -3933,7 +3932,7 @@ function AuthForm({ mode, busy, error, onSubmit, onSwitch }) {
     if (isRegister && password !== confirm) {
       return;
     }
-    onSubmit(username, password, isRegister ? displayName : undefined);
+    onSubmit(username, password, undefined);
   };
 
   const mismatch = isRegister && confirm.length > 0 && password !== confirm;
@@ -3974,18 +3973,6 @@ function AuthForm({ mode, busy, error, onSubmit, onSwitch }) {
           style={inputStyle}
           autoCapitalize="none"
         />
-
-        {isRegister && (
-          <>
-            <FieldLabel text="Display name" />
-            <input
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="How you want to appear on leaderboard"
-              style={inputStyle}
-            />
-          </>
-        )}
 
         <FieldLabel text="Password" />
         <input
