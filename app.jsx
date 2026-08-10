@@ -18,6 +18,11 @@ import {
   Trophy,
   Code2,
   ClipboardList,
+  Play,
+  Terminal,
+  Loader2,
+  ChevronDown,
+  Trash2,
 } from "lucide-react";
 
 const LOGO_DATA_URI =
@@ -3541,7 +3546,7 @@ export default function QuizApp() {
             />
           )}
 
-          {view === "ide" && <PythonIde />}
+          {view === "ide" && <LanguageIde />}
 
           {view === "assignments" && <Assignments />}
 
@@ -3681,138 +3686,427 @@ function Assignments() {
   );
 }
 
-function PythonIde() {
-  const [code, setCode] = useState(
-    `print("Hello from Python IDE")\nfor i in range(3):\n    print(i)`,
-  );
-  const [output, setOutput] = useState(
-    "Run your Python snippet to see output here.",
-  );
+// ─── Pyodide loader (singleton) ──────────────────────────────────────────────
+let _pyodidePromise = null;
+function loadPyodide() {
+  if (_pyodidePromise) return _pyodidePromise;
+  _pyodidePromise = new Promise((resolve, reject) => {
+    if (window.loadPyodide) { resolve(); return; }
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js";
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  }).then(async () => {
+    if (!window._pyodideInstance) {
+      window._pyodideInstance = await window.loadPyodide({
+        indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.1/full/",
+      });
+    }
+  });
+  return _pyodidePromise;
+}
+
+// ─── Piston API runner (C / C++) ─────────────────────────────────────────────
+async function runWithPiston(language, version, code, stdin = "") {
+  const res = await fetch("https://emkc.org/api/v2/piston/execute", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      language,
+      version,
+      files: [{ name: "main." + (language === "c" ? "c" : "cpp"), content: code }],
+      stdin,
+      compile_timeout: 10000,
+      run_timeout: 5000,
+    }),
+  });
+  if (!res.ok) throw new Error(`Piston error ${res.status}`);
+  return res.json();
+}
+
+// ─── Shared IDE shell ─────────────────────────────────────────────────────────
+const LANG_META = {
+  python: {
+    label: "Python",
+    ext: "py",
+    color: "#4C8FBD",
+    defaultCode: `# Python 3 — runs in-browser via Pyodide
+print("Hello, EDU TECH!")
+
+def factorial(n):
+    if n <= 1:
+        return 1
+    return n * factorial(n - 1)
+
+for i in range(1, 8):
+    print(f"{i}! = {factorial(i)}")
+`,
+  },
+  c: {
+    label: "C",
+    ext: "c",
+    color: "#8B6FD1",
+    defaultCode: `#include <stdio.h>
+
+int factorial(int n) {
+    if (n <= 1) return 1;
+    return n * factorial(n - 1);
+}
+
+int main() {
+    printf("Hello, EDU TECH!\\n");
+    for (int i = 1; i <= 7; i++) {
+        printf("%d! = %d\\n", i, factorial(i));
+    }
+    return 0;
+}
+`,
+  },
+};
+
+function LanguageIde() {
+  const [lang, setLang] = useState("python");
+  const [codes, setCodes] = useState({
+    python: LANG_META.python.defaultCode,
+    c: LANG_META.c.defaultCode,
+  });
+  const [stdin, setStdin] = useState("");
+  const [showStdin, setShowStdin] = useState(false);
+  const [output, setOutput] = useState("");
+  const [status, setStatus] = useState("idle"); // idle | loading | running | done | error
+  const [statusMsg, setStatusMsg] = useState("");
+  const meta = LANG_META[lang];
+
+  const setCode = (v) => setCodes((p) => ({ ...p, [lang]: v }));
+
+  const runPython = async () => {
+    setStatus("loading");
+    setStatusMsg("Loading Pyodide runtime…");
+    setOutput("");
+    try {
+      await loadPyodide();
+      const py = window._pyodideInstance;
+      setStatus("running");
+      setStatusMsg("Running…");
+
+      // Capture stdout/stderr
+      py.globals.set("_captured_output", []);
+      const wrapped = `
+import sys
+from io import StringIO
+_buf = StringIO()
+sys.stdout = _buf
+sys.stderr = _buf
+try:
+    exec(${JSON.stringify(codes.python)})
+except Exception as e:
+    print(f"Error: {e}")
+sys.stdout = sys.__stdout__
+sys.stderr = sys.__stderr__
+_captured_output.append(_buf.getvalue())
+`;
+      await py.runPythonAsync(wrapped);
+      const captured = py.globals.get("_captured_output").toJs();
+      setOutput(captured[0] ?? "(no output)");
+      setStatus("done");
+      setStatusMsg("Finished");
+    } catch (e) {
+      setOutput(String(e));
+      setStatus("error");
+      setStatusMsg("Error");
+    }
+  };
+
+  const runC = async () => {
+    setStatus("loading");
+    setStatusMsg("Sending to compiler…");
+    setOutput("");
+    try {
+      const result = await runWithPiston("c", "10.2.0", codes.c, stdin);
+      const compile = result.compile || {};
+      if (compile.stderr) {
+        setOutput("Compile error:\n" + compile.stderr);
+        setStatus("error");
+        setStatusMsg("Compile error");
+        return;
+      }
+      const run = result.run || {};
+      const out = (run.stdout || "") + (run.stderr ? "\nstderr:\n" + run.stderr : "");
+      setOutput(out || "(no output)");
+      setStatus(run.code === 0 ? "done" : "error");
+      setStatusMsg(run.code === 0 ? `Exited 0` : `Exited ${run.code}`);
+    } catch (e) {
+      setOutput(String(e));
+      setStatus("error");
+      setStatusMsg("Network error");
+    }
+  };
 
   const handleRun = () => {
-    const trimmed = code.trim();
-    if (!trimmed) {
-      setOutput("Enter a Python snippet to run.");
-      return;
-    }
-
-    const lines = trimmed.split(/\r?\n/);
-    const result = [];
-
-    for (const line of lines) {
-      const printMatch = line.match(/^print\((.*)\)$/);
-      if (printMatch) {
-        const value = printMatch[1].replace(/^['\"]|['\"]$/g, "");
-        result.push(value);
-      }
-    }
-
-    setOutput(
-      result.length
-        ? result.join("\n")
-        : "This demo supports simple print() statements.",
-    );
+    if (status === "loading" || status === "running") return;
+    if (lang === "python") runPython();
+    else runC();
   };
+
+  const busy = status === "loading" || status === "running";
+
+  const statusColor = {
+    idle: COLORS.paperDim,
+    loading: COLORS.amber,
+    running: COLORS.amber,
+    done: COLORS.green,
+    error: COLORS.clay,
+  }[status];
 
   return (
     <div style={{ padding: "8px 0" }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+        <Terminal size={20} color={COLORS.amber} />
+        <div style={{ fontFamily: "'Spectral', serif", fontSize: 22, fontWeight: 700 }}>
+          Code IDE
+        </div>
+        {/* Language tabs */}
+        <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
+          {Object.entries(LANG_META).map(([key, m]) => (
+            <button
+              key={key}
+              onClick={() => { setLang(key); setOutput(""); setStatus("idle"); setStatusMsg(""); }}
+              style={{
+                padding: "6px 14px",
+                borderRadius: 6,
+                border: `1px solid ${lang === key ? m.color : COLORS.line}`,
+                background: lang === key ? `${m.color}22` : "transparent",
+                color: lang === key ? m.color : COLORS.paperDim,
+                fontWeight: 600,
+                fontSize: 13,
+                cursor: "pointer",
+                fontFamily: "'Inter', sans-serif",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <Code2 size={13} />
+              {m.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div
         style={{
           background: COLORS.inkSoft,
           border: `1px solid ${COLORS.line}`,
           borderRadius: 10,
-          padding: 20,
+          overflow: "hidden",
         }}
       >
+        {/* Toolbar */}
         <div
           style={{
-            fontFamily: "'Spectral', serif",
-            fontSize: 20,
-            fontWeight: 700,
-            marginBottom: 8,
-          }}
-        >
-          Python IDE
-        </div>
-        <div style={{ color: COLORS.paperDim, fontSize: 13, marginBottom: 16 }}>
-          Write simple Python snippets and run them in this lightweight editor.
-        </div>
-
-        <textarea
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          spellCheck={false}
-          style={{
-            width: "100%",
-            minHeight: 220,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "10px 16px",
+            borderBottom: `1px solid ${COLORS.line}`,
             background: COLORS.ink,
-            color: COLORS.paper,
-            border: `1px solid ${COLORS.line}`,
-            borderRadius: 8,
-            padding: 12,
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 13,
-            resize: "vertical",
-            boxSizing: "border-box",
-          }}
-        />
-
-        <div
-          style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}
-        >
-          <button
-            onClick={handleRun}
-            style={{
-              background: COLORS.amber,
-              color: COLORS.ink,
-              border: "none",
-              borderRadius: 6,
-              padding: "9px 14px",
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
-            Run
-          </button>
-        </div>
-
-        <div
-          style={{
-            marginTop: 16,
-            background: COLORS.ink,
-            border: `1px solid ${COLORS.line}`,
-            borderRadius: 8,
-            padding: 12,
-            minHeight: 100,
+            flexWrap: "wrap",
           }}
         >
           <div
             style={{
               fontSize: 11,
-              letterSpacing: 1.2,
-              color: COLORS.paperDim,
-              marginBottom: 8,
+              letterSpacing: 1.5,
+              color: meta.color,
+              fontFamily: "'JetBrains Mono', monospace",
               textTransform: "uppercase",
             }}
           >
-            Output
+            {meta.label} · main.{meta.ext}
+          </div>
+          <div style={{ flex: 1 }} />
+
+          {/* stdin toggle (C only) */}
+          {lang === "c" && (
+            <button
+              onClick={() => setShowStdin((v) => !v)}
+              style={{
+                background: showStdin ? `${COLORS.teal}22` : "transparent",
+                border: `1px solid ${showStdin ? COLORS.teal : COLORS.line}`,
+                color: showStdin ? COLORS.teal : COLORS.paperDim,
+                borderRadius: 5,
+                padding: "5px 10px",
+                fontSize: 11,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                fontFamily: "'Inter', sans-serif",
+              }}
+            >
+              stdin <ChevronDown size={11} style={{ transform: showStdin ? "rotate(180deg)" : "none" }} />
+            </button>
+          )}
+
+          {/* Clear */}
+          <button
+            onClick={() => { setCode(""); setOutput(""); setStatus("idle"); setStatusMsg(""); }}
+            title="Clear editor"
+            style={{
+              background: "transparent",
+              border: `1px solid ${COLORS.line}`,
+              color: COLORS.paperDim,
+              borderRadius: 5,
+              padding: "5px 8px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <Trash2 size={13} />
+          </button>
+
+          {/* Run */}
+          <button
+            onClick={handleRun}
+            disabled={busy}
+            style={{
+              background: busy ? COLORS.line : COLORS.amber,
+              color: busy ? COLORS.paperDim : COLORS.ink,
+              border: "none",
+              borderRadius: 6,
+              padding: "7px 16px",
+              fontWeight: 700,
+              fontSize: 13,
+              cursor: busy ? "not-allowed" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontFamily: "'Inter', sans-serif",
+            }}
+          >
+            {busy ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Play size={13} />}
+            {busy ? statusMsg : "Run"}
+          </button>
+        </div>
+
+        {/* stdin panel */}
+        {lang === "c" && showStdin && (
+          <div style={{ padding: "10px 16px", borderBottom: `1px solid ${COLORS.line}`, background: COLORS.ink }}>
+            <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.teal, marginBottom: 6, textTransform: "uppercase" }}>
+              stdin input
+            </div>
+            <textarea
+              value={stdin}
+              onChange={(e) => setStdin(e.target.value)}
+              placeholder="Provide stdin for your program…"
+              spellCheck={false}
+              style={{
+                width: "100%",
+                height: 72,
+                background: COLORS.inkSoft,
+                color: COLORS.paper,
+                border: `1px solid ${COLORS.line}`,
+                borderRadius: 6,
+                padding: "8px 10px",
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 12,
+                resize: "vertical",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+        )}
+
+        {/* Code editor */}
+        <textarea
+          value={codes[lang]}
+          onChange={(e) => setCode(e.target.value)}
+          spellCheck={false}
+          style={{
+            width: "100%",
+            minHeight: 320,
+            background: "#0d1117",
+            color: "#e6edf3",
+            border: "none",
+            borderBottom: `1px solid ${COLORS.line}`,
+            padding: "16px 18px",
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 13,
+            lineHeight: 1.65,
+            resize: "vertical",
+            boxSizing: "border-box",
+            outline: "none",
+            tabSize: 4,
+          }}
+          onKeyDown={(e) => {
+            // Tab inserts 4 spaces
+            if (e.key === "Tab") {
+              e.preventDefault();
+              const ta = e.target;
+              const start = ta.selectionStart;
+              const end = ta.selectionEnd;
+              const newVal = ta.value.substring(0, start) + "    " + ta.value.substring(end);
+              setCode(newVal);
+              requestAnimationFrame(() => {
+                ta.selectionStart = ta.selectionEnd = start + 4;
+              });
+            }
+          }}
+        />
+
+        {/* Output panel */}
+        <div style={{ padding: "12px 16px", background: "#0d1117" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <Terminal size={12} color={COLORS.paperDim} />
+            <span style={{ fontSize: 11, letterSpacing: 1.2, color: COLORS.paperDim, textTransform: "uppercase" }}>
+              Output
+            </span>
+            {statusMsg && (
+              <span style={{ fontSize: 11, color: statusColor, fontFamily: "'JetBrains Mono', monospace", marginLeft: 6 }}>
+                — {statusMsg}
+              </span>
+            )}
+            {lang === "python" && status === "idle" && (
+              <span style={{ fontSize: 11, color: COLORS.paperDim, marginLeft: "auto", opacity: 0.6 }}>
+                Runs in-browser via Pyodide
+              </span>
+            )}
+            {lang === "c" && status === "idle" && (
+              <span style={{ fontSize: 11, color: COLORS.paperDim, marginLeft: "auto", opacity: 0.6 }}>
+                Compiled via Piston API
+              </span>
+            )}
           </div>
           <pre
             style={{
               margin: 0,
               whiteSpace: "pre-wrap",
-              color: COLORS.paper,
+              wordBreak: "break-word",
+              color: status === "error" ? COLORS.clay : "#e6edf3",
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: 13,
+              lineHeight: 1.6,
+              minHeight: 80,
             }}
           >
-            {output}
+            {busy
+              ? "⟳  " + statusMsg + "…"
+              : output || "Press Run to execute your code."}
           </pre>
         </div>
       </div>
+
+      {/* CSS spin keyframe injected once */}
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
+
+// Keep PythonIde as alias so nothing else breaks (unused but safe)
+function PythonIde() { return <LanguageIde />; }
 
 function Sidebar({ view, category, onNav, username, onLogout }) {
   const [narrow, setNarrow] = useState(
@@ -3830,7 +4124,7 @@ function Sidebar({ view, category, onNav, username, onLogout }) {
     { id: "daily", label: "Daily", icon: CalendarDays },
     { id: "assignments", label: "Assignments", icon: ClipboardList },
     { id: "answersMenu", label: "Answers", icon: KeyRound },
-    { id: "ide", label: "Python IDE", icon: Code2 },
+    { id: "ide", label: "Code IDE", icon: Code2 },
     { id: "leaderboard", label: "Leaders", icon: Trophy },
     { id: "profile", label: "Profile", icon: User },
   ];
