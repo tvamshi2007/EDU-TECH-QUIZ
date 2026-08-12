@@ -6001,7 +6001,7 @@ function Home({ submissions, onStart, onViewKey }) {
   return (
     <div>
       <div style={{ display: "grid", gap: 16 }}>
-        {Object.entries(QUESTIONS).map(([key, cat]) => {
+        {Object.entries(QUESTIONS).filter(([, cat]) => !cat.isAssignment).map(([key, cat]) => {
           const sub = submissions[key];
           return (
             <div
