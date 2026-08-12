@@ -3258,6 +3258,7 @@ const QUESTIONS = {
   assignment_c: {
     label: "C Programming — Assignment",
     code: "ASGN-C-01",
+    description: "Exam starts at 5pm",
     items: ASSIGNMENT_C_QUESTIONS,
     isAssignment: true,
   },
