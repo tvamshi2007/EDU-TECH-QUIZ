@@ -2524,6 +2524,377 @@ const C_LEVEL_POOL = {
   hard: C_POOL.hard,
 };
 
+// ─── Assignment question bank: C Programming (50 Qs) ─────────────────────────
+// Source: SECTION 1 – SECTION 5 handout. Covers Syntax & Basics, Control Flow,
+// Pointers & Memory, Arrays & Strings, Structures / Preprocessors & Advanced.
+const ASSIGNMENT_C_QUESTIONS = [
+  // ── SECTION 1: SYNTAX & BASICS (Q1–Q10) ─────────────────────────────────
+  {
+    q: "Which keyword is used to prevent any changes to a variable in C?",
+    opts: ["volatile", "immutable", "const", "stable"],
+    correct: 2,
+  },
+  {
+    q: "What is the default return type of a function in C if it is not explicitly specified?",
+    opts: ["void", "int", "char", "float"],
+    correct: 1,
+  },
+  {
+    q: "Which of the following is NOT a valid variable name in C?",
+    opts: ["_int", "variable_1", "2variable", "main"],
+    correct: 2,
+  },
+  {
+    q: "What is the size of a char data type in standard C?",
+    opts: ["1 byte", "2 bytes", "4 bytes", "Depends on the compiler"],
+    correct: 0,
+  },
+  {
+    q: "Which operator is used to find the remainder of a division between two integers?",
+    opts: ["/", "%", "\\", "rem"],
+    correct: 1,
+  },
+  {
+    q: "Which escape sequence represents a horizontal tab in C?",
+    opts: ["\\b", "\\n", "\\t", "\\r"],
+    correct: 2,
+  },
+  {
+    q: "What is the correct way to write a single-line comment in C99 and later?",
+    opts: ["# Comment", "// Comment", "/* Comment", "-- Comment"],
+    correct: 1,
+  },
+  {
+    q: "Which format specifier is used to print a double precision floating-point number using printf?",
+    opts: ["%f", "%lf", "%d", "%ld"],
+    correct: 0,
+  },
+  {
+    q: "What is the result of the expression 5 / 2 in C?",
+    opts: ["2.5", "2", "3", "0"],
+    correct: 1,
+  },
+  {
+    q: "Which standard library header file contains the printf() and scanf() functions?",
+    opts: ["stdlib.h", "conio.h", "string.h", "stdio.h"],
+    correct: 3,
+  },
+  // ── SECTION 2: CONTROL FLOW & LOOPS (Q11–Q20) ───────────────────────────
+  {
+    q: "Which block always executes at least once in a C program?",
+    opts: ["while loop", "for loop", "do-while loop", "if-else statement"],
+    correct: 2,
+  },
+  {
+    q: "What happens when a break statement is encountered inside a nested loop?",
+    opts: [
+      "It terminates the innermost loop.",
+      "It terminates all loops.",
+      "It skips the current iteration.",
+      "It exits the entire program.",
+    ],
+    correct: 0,
+  },
+  {
+    q: "What is the purpose of the continue statement in a loop?",
+    opts: [
+      "To terminate the loop entirely.",
+      "To skip the rest of the current iteration and move to the next.",
+      "To restart the loop from the beginning variable values.",
+      "To pause execution until user input.",
+    ],
+    correct: 1,
+  },
+  {
+    q: "What are the only values evaluated as 'false' in a C conditional statement?",
+    opts: ["Only -1", "Only 0", "Any negative number", "NULL and 0"],
+    correct: 1,
+  },
+  {
+    q: "Can a switch statement evaluate a floating-point expression?",
+    opts: [
+      "Yes, always",
+      "Yes, if cast to a double",
+      "No, only integer and character types are allowed",
+      "Only in C11 standard",
+    ],
+    correct: 2,
+  },
+  {
+    q: "What is the equivalent ternary operator structure for an if-else statement?",
+    opts: [
+      "condition ? expression1 : expression2",
+      "condition : expression1 ? expression2",
+      "condition ? expression1 ? expression2",
+      "expression1 ? condition : expression2",
+    ],
+    correct: 0,
+  },
+  {
+    q: "What type of loop is for(;;)?",
+    opts: ["Syntax error loop", "Finite loop", "Infinite loop", "Undefined loop"],
+    correct: 2,
+  },
+  {
+    q: "What is the order of evaluation in a for loop header?",
+    opts: [
+      "Condition, Initialization, Increment",
+      "Initialization, Condition, Increment",
+      "Increment, Condition, Initialization",
+      "Initialization, Increment, Condition",
+    ],
+    correct: 1,
+  },
+  {
+    q: "Which header file is required to use the exit() function to stop program execution?",
+    opts: ["stdio.h", "stdlib.h", "process.h", "assert.h"],
+    correct: 1,
+  },
+  {
+    q: 'What is a "dangling else" problem in C?',
+    opts: [
+      "An else statement without an executable body",
+      "An else statement that cannot be matched to any if statement",
+      "Nested if-else statements without braces causing ambiguity about which if matches the else",
+      "Memory leaks caused by conditions",
+    ],
+    correct: 2,
+  },
+  // ── SECTION 3: POINTERS & MEMORY MANAGEMENT (Q21–Q30) ───────────────────
+  {
+    q: "What does a pointer variable store?",
+    opts: [
+      "The value of another variable",
+      "The memory address of another variable",
+      "The name of another variable",
+      "A character string",
+    ],
+    correct: 1,
+  },
+  {
+    q: "Which operator is used to obtain the address of a variable?",
+    opts: ["*", "->", "&", "."],
+    correct: 2,
+  },
+  {
+    q: "What is a NULL pointer?",
+    opts: [
+      "A pointer pointing to the address 0xFFFF",
+      "A pointer that has not been initialized",
+      "A pointer pointing to a reliable empty string",
+      "A pointer that points to nothing or address 0",
+    ],
+    correct: 3,
+  },
+  {
+    q: "Which function is used to allocate memory dynamically but initializes it all to zero?",
+    opts: ["malloc()", "calloc()", "realloc()", "free()"],
+    correct: 1,
+  },
+  {
+    q: "What happens if you try to free dynamically allocated memory twice?",
+    opts: [
+      "Nothing, it is safe.",
+      "The memory is reallocated.",
+      "It causes undefined behavior or a runtime crash.",
+      "The pointer is automatically set to NULL.",
+    ],
+    correct: 2,
+  },
+  {
+    q: 'What is a "void pointer" in C?',
+    opts: [
+      "A pointer that cannot point to anything",
+      "A pointer that points to a function returning void",
+      "A generic pointer that can point to any data type",
+      "A pointer that points to deleted memory",
+    ],
+    correct: 2,
+  },
+  {
+    q: "If ptr is a pointer to an integer, what does ptr++ do?",
+    opts: [
+      "Increments the integer value stored at that address by 1",
+      "Moves the pointer to the next memory address based on the size of an int",
+      "Adds 1 byte to the pointer address",
+      "Multiplies the address by 2",
+    ],
+    correct: 1,
+  },
+  {
+    q: "Which function changes the size of previously allocated memory without losing current data?",
+    opts: ["malloc()", "calloc()", "realloc()", "alloc()"],
+    correct: 2,
+  },
+  {
+    q: 'What is a "dangling pointer"?',
+    opts: [
+      "A pointer pointing to an unallocated memory slot in a loop",
+      "A pointer pointing to a memory location that has already been deallocated",
+      "A pointer that holds an integer value instead of an address",
+      "A pointer initialized to NULL",
+    ],
+    correct: 1,
+  },
+  {
+    q: "What operator is used to access structure members using a structure pointer?",
+    opts: [".", "*", "&", "->"],
+    correct: 3,
+  },
+  // ── SECTION 4: ARRAYS & STRINGS (Q31–Q40) ───────────────────────────────
+  {
+    q: "What is the index of the first element in a C array?",
+    opts: ["-1", "0", "1", "Depends on the declaration"],
+    correct: 1,
+  },
+  {
+    q: "What character automatically marks the end of a string array in C?",
+    opts: ["\\n", "\\0", "\\t", "EOF"],
+    correct: 1,
+  },
+  {
+    q: "What happens if you access an array index out of its declared bounds?",
+    opts: [
+      "Compiler error",
+      "Runtime exception thrown by OS",
+      "Undefined behavior (could read garbage value or crash)",
+      "The array automatically resizes",
+    ],
+    correct: 2,
+  },
+  {
+    q: "Which library function is used to compare two strings alphabetically?",
+    opts: ["strcpy()", "strcmp()", "strlen()", "strcat()"],
+    correct: 1,
+  },
+  {
+    q: "How is a multi-dimensional array stored sequentially in memory in C?",
+    opts: [
+      "Column-major order",
+      "Row-major order",
+      "Zig-zag order",
+      "It is non-contiguous",
+    ],
+    correct: 1,
+  },
+  {
+    q: "What does strlen() count when calculating string length?",
+    opts: [
+      "All characters including the null terminator",
+      "All characters excluding the null terminator",
+      "Only alphabetic characters",
+      "Total bytes allocated for the array",
+    ],
+    correct: 1,
+  },
+  {
+    q: "If you declare int arr[5] = {1, 2};, what are the values of the remaining elements?",
+    opts: ["Garbage values", "1, 2 repeated", "0, 0, 0", "Compiler error"],
+    correct: 2,
+  },
+  {
+    q: "Which function safely limits the number of characters read into a string from standard input?",
+    opts: ['gets()', 'fgets()', 'scanf("%s")', 'getstr()'],
+    correct: 1,
+  },
+  {
+    q: "What does the array name itself represent when passed to a function?",
+    opts: [
+      "The value of the first element",
+      "The size of the array",
+      "A pointer to the first element of the array",
+      "The total number of elements",
+    ],
+    correct: 2,
+  },
+  {
+    q: "Which function copies one string to another destination memory block?",
+    opts: ["strdup()", "strcat()", "strcpy()", "strchr()"],
+    correct: 2,
+  },
+  // ── SECTION 5: STRUCTURES, PREPROCESSORS & ADVANCED (Q41–Q50) ───────────
+  {
+    q: "What is the main structural difference between a struct and a union in C?",
+    opts: [
+      "Structs can hold functions, unions cannot.",
+      "Struct elements share the same memory space; union elements have separate spaces.",
+      "Union elements share the same memory space; struct elements have separate spaces.",
+      "Unions cannot hold pointer types.",
+    ],
+    correct: 2,
+  },
+  {
+    q: "Which preprocessor directive is used to define constants or macros?",
+    opts: ["#include", "#define", "#ifdef", "#pragma"],
+    correct: 1,
+  },
+  {
+    q: "What does the #include <filename> syntax indicate to the preprocessor?",
+    opts: [
+      "Search for the file only in the current working directory.",
+      "Search for the file in the standard system include directories.",
+      "Download the file from an external repository.",
+      "Compile the file separately.",
+    ],
+    correct: 1,
+  },
+  {
+    q: "Which storage class specifies that a variable should be kept in a CPU register if possible?",
+    opts: ["auto", "static", "register", "extern"],
+    correct: 2,
+  },
+  {
+    q: "What is the lifetime of a local static variable inside a function?",
+    opts: [
+      "Destroys when the function exits",
+      "Destroys when the current loop block exits",
+      "Persists throughout the entire lifetime of the program",
+      "Persists only until the next function call",
+    ],
+    correct: 2,
+  },
+  {
+    q: "What does the extern keyword signify?",
+    opts: [
+      "The variable is visible only within the local function.",
+      "The variable is declared in another file or outside the current scope.",
+      "The variable is stored in external flash memory.",
+      "The variable cannot be altered during execution.",
+    ],
+    correct: 1,
+  },
+  {
+    q: 'Which file opening mode in fopen() is used to open a file for writing at the end of it?',
+    opts: ['"r"', '"w"', '"a"', '"r+"'],
+    correct: 2,
+  },
+  {
+    q: "What is the purpose of a typedef in C?",
+    opts: [
+      "To declare a new data type entirely",
+      "To create an alias or shortcut name for an existing data type",
+      "To convert variables from one type to another dynamically",
+      "To encrypt variable names",
+    ],
+    correct: 1,
+  },
+  {
+    q: "What is a macro expansion?",
+    opts: [
+      "A runtime optimization tool",
+      "A compile-time textual substitution text process",
+      "A dynamic memory expansion algorithm",
+      "A mechanism to create deep structures",
+    ],
+    correct: 1,
+  },
+  {
+    q: "Which operator is used to perform bitwise AND operations in C?",
+    opts: ["&&", "&", "|", "^"],
+    correct: 1,
+  },
+];
+
 const C_POOL_FLAT = TECH_LEVEL_ORDER.flatMap((level) => C_LEVEL_POOL[level]);
 const QUESTIONS = {
   aptitude: {
@@ -2883,6 +3254,12 @@ const QUESTIONS = {
     get items() {
       return C_POOL_FLAT;
     },
+  },
+  assignment_c: {
+    label: "C Programming — Assignment",
+    code: "ASGN-C-01",
+    items: ASSIGNMENT_C_QUESTIONS,
+    isAssignment: true,
   },
 };
 
@@ -3548,7 +3925,16 @@ export default function QuizApp() {
 
           {view === "ide" && <LanguageIde />}
 
-          {view === "assignments" && <Assignments />}
+          {view === "assignments" && (
+            <Assignments
+              submissions={submissions}
+              onStart={(cat) => startQuiz(cat)}
+              onViewKey={(cat) => {
+                setCategory(cat);
+                setView("key");
+              }}
+            />
+          )}
 
           {view === "quiz" && category && (
             <Quiz
@@ -3629,7 +4015,17 @@ export default function QuizApp() {
   );
 }
 
-function Assignments() {
+function Assignments({ submissions, onStart, onViewKey }) {
+  // Collect only the assignment-tagged entries from QUESTIONS
+  const assignmentEntries = Object.entries(QUESTIONS).filter(
+    ([, cat]) => cat.isAssignment,
+  );
+
+  // Check if current time is before 5pm (17:00)
+  const now = new Date();
+  const currentHour = now.getHours();
+  const isBefore5pm = currentHour < 17;
+
   return (
     <div>
       <div
@@ -3659,28 +4055,203 @@ function Assignments() {
           lineHeight: 1.6,
         }}
       >
-        Assignments will appear here once they are published by your instructor.
+        Complete each assignment and submit — the detailed answer key unlocks
+        immediately after you submit.
       </p>
-      <div
-        style={{
-          textAlign: "center",
-          padding: "48px 24px",
-          border: `1px dashed ${COLORS.line}`,
-          borderRadius: 8,
-          color: COLORS.paperDim,
-        }}
-      >
-        <ClipboardList
-          size={36}
-          color={COLORS.line}
-          style={{ marginBottom: 14 }}
-        />
-        <div style={{ fontSize: 15, marginBottom: 6, color: COLORS.paper }}>
-          No assignments yet
-        </div>
-        <div style={{ fontSize: 13 }}>
-          Check back later — assignments will show up here when available.
-        </div>
+
+      <div style={{ display: "grid", gap: 16 }}>
+        {assignmentEntries.map(([key, cat]) => {
+          const sub = submissions[key];
+          const pct = sub ? Math.round((sub.score / sub.total) * 100) : null;
+
+          return (
+            <div
+              key={key}
+              style={{
+                background: COLORS.inkSoft,
+                border: `1px solid ${sub ? COLORS.green : COLORS.line}`,
+                borderRadius: 10,
+                padding: 22,
+              }}
+            >
+              {/* Header row */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  gap: 12,
+                  flexWrap: "wrap",
+                }}
+              >
+                <div style={{ flex: 1, minWidth: 200 }}>
+                  <div
+                    style={{
+                      fontSize: 10,
+                      letterSpacing: 2,
+                      color: COLORS.amber,
+                      fontFamily: "'JetBrains Mono', monospace",
+                      marginBottom: 4,
+                    }}
+                  >
+                    {cat.code}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "'Spectral', serif",
+                      fontSize: 20,
+                      fontWeight: 600,
+                      marginBottom: 6,
+                    }}
+                  >
+                    {cat.label}
+                  </div>
+                  {cat.description && (
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: COLORS.paperDim,
+                        lineHeight: 1.6,
+                        marginBottom: 4,
+                      }}
+                    >
+                      {cat.description}
+                    </div>
+                  )}
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: COLORS.paperDim,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      marginTop: 2,
+                    }}
+                  >
+                    <ClipboardList size={12} />
+                    {cat.items.length} questions · 60 sec per question
+                  </div>
+                </div>
+
+                {/* Score badge when submitted */}
+                {sub && (
+                  <div
+                    style={{
+                      textAlign: "right",
+                      fontFamily: "'JetBrains Mono', monospace",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 22,
+                        fontWeight: 700,
+                        color: pct >= 50 ? COLORS.green : COLORS.clay,
+                        lineHeight: 1,
+                      }}
+                    >
+                      {sub.score}/{sub.total}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: COLORS.paperDim,
+                        marginTop: 3,
+                        letterSpacing: 1,
+                      }}
+                    >
+                      {pct}% · SUBMITTED
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Progress bar when submitted */}
+              {sub && (
+                <div
+                  style={{
+                    height: 5,
+                    background: COLORS.ink,
+                    borderRadius: 3,
+                    overflow: "hidden",
+                    margin: "14px 0 16px",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${pct}%`,
+                      background: pct >= 50 ? COLORS.green : COLORS.clay,
+                      borderRadius: 3,
+                      transition: "width 0.4s ease",
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  marginTop: sub ? 0 : 18,
+                  flexWrap: "wrap",
+                }}
+              >
+                <button
+                  onClick={() => onStart(key)}
+                  disabled={key === "assignment_c" && isBefore5pm}
+                  style={{
+                    background: key === "assignment_c" && isBefore5pm ? COLORS.line : COLORS.paper,
+                    color: COLORS.ink,
+                    border: "none",
+                    padding: "9px 18px",
+                    borderRadius: 5,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: key === "assignment_c" && isBefore5pm ? "not-allowed" : "pointer",
+                    fontFamily: "'Inter', sans-serif",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    opacity: key === "assignment_c" && isBefore5pm ? 0.5 : 1,
+                  }}
+                >
+                  {sub ? (
+                    <>
+                      <RotateCcw size={13} /> Retake
+                    </>
+                  ) : (
+                    <>
+                      <Play size={13} /> Start assignment
+                    </>
+                  )}
+                </button>
+
+                {sub && (
+                  <button
+                    onClick={() => onViewKey(key)}
+                    style={{
+                      background: "none",
+                      color: COLORS.green,
+                      border: `1px solid ${COLORS.green}`,
+                      padding: "9px 18px",
+                      borderRadius: 5,
+                      fontSize: 13,
+                      cursor: "pointer",
+                      fontFamily: "'Inter', sans-serif",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <Unlock size={13} /> Answer key
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -4155,6 +4726,7 @@ function Sidebar({ view, category, onNav, username, onLogout }) {
   ];
 
   const isDaily = category && category.startsWith("daily_");
+  const isAssignment = category && getCategoryMeta(category)?.isAssignment;
   const activeTab =
     view === "quiz" || view === "result"
       ? isDaily
@@ -5275,6 +5847,7 @@ function AnswersMenu({ submissions, now, onSelect, onGoExams }) {
       <div style={{ display: "grid", gap: 12 }}>
         {Object.entries(QUESTIONS).map(([key, cat]) => {
           const sub = submissions[key];
+          // Include assignments in the answers menu
           if (!sub) {
             return (
               <div
@@ -5616,6 +6189,8 @@ function Quiz({ items, meta, qIndex, answers, onSelect, onNext, onPrev }) {
   const item = items[qIndex];
   const selected = answers[qIndex];
   const remainingCount = items.length - (qIndex + 1);
+  const isAssignment = meta?.isAssignment;
+  const hasAnswered = selected !== undefined;
   if (!item) return null;
 
   useEffect(() => {
@@ -5748,10 +6323,12 @@ function Quiz({ items, meta, qIndex, answers, onSelect, onNext, onPrev }) {
         <div style={{ display: "grid", gap: 10 }}>
           {item.opts.map((opt, i) => {
             const isSelected = selected === i;
+            const isDisabled = isAssignment && hasAnswered;
             return (
               <button
                 key={i}
-                onClick={() => onSelect(i)}
+                onClick={() => !isDisabled && onSelect(i)}
+                disabled={isDisabled}
                 style={{
                   textAlign: "left",
                   padding: "12px 14px",
@@ -5762,11 +6339,12 @@ function Quiz({ items, meta, qIndex, answers, onSelect, onNext, onPrev }) {
                     : "transparent",
                   color: COLORS.paper,
                   fontSize: 14,
-                  cursor: "pointer",
+                  cursor: isDisabled ? "not-allowed" : "pointer",
                   fontFamily: "'Inter', sans-serif",
                   display: "flex",
                   alignItems: "center",
                   gap: 10,
+                  opacity: isDisabled && !isSelected ? 0.5 : 1,
                 }}
               >
                 <span
