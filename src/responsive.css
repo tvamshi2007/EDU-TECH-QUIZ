@@ -502,3 +502,226 @@ img, svg, picture {
 @media (min-width: 640px) {
   .show-mobile-only { display: none !important; }
 }
+
+/* ================================================================
+   ANIMATION & MICRO-INTERACTION SYSTEM
+   ================================================================ */
+
+/* ── Keyframes ──────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scoreCelebrate {
+  0% {
+    opacity: 0;
+    transform: scale(0.75) rotate(-8deg);
+  }
+  60% {
+    transform: scale(1.06) rotate(2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-3deg);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(232, 163, 56, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(232, 163, 56, 0);
+  }
+}
+
+@keyframes pulseUrgent {
+  0%, 100% {
+    transform: scale(1);
+    border-color: rgba(193, 88, 63, 0.8);
+    box-shadow: 0 0 10px rgba(193, 88, 63, 0.3);
+  }
+  50% {
+    transform: scale(1.04);
+    border-color: rgba(193, 88, 63, 1);
+    box-shadow: 0 0 16px rgba(193, 88, 63, 0.6);
+  }
+}
+
+@keyframes onlinePulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(63, 143, 99, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(63, 143, 99, 0);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes optionPop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.015);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ── Animation utility classes ──────────────────────────────── */
+.animate-fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-slide-up {
+  animation: slideUpFade 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-score {
+  animation: scoreCelebrate 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+.animate-pulse-urgent {
+  animation: pulseUrgent 1.2s infinite ease-in-out;
+}
+
+.animate-online-pulse {
+  animation: onlinePulse 2.4s infinite ease-in-out;
+}
+
+/* ── Staggered entrance helpers ─────────────────────────────── */
+.stagger-1 { animation-delay: 0.04s; }
+.stagger-2 { animation-delay: 0.08s; }
+.stagger-3 { animation-delay: 0.12s; }
+.stagger-4 { animation-delay: 0.16s; }
+.stagger-5 { animation-delay: 0.20s; }
+.stagger-6 { animation-delay: 0.24s; }
+.stagger-7 { animation-delay: 0.28s; }
+.stagger-8 { animation-delay: 0.32s; }
+
+/* ── Micro-interactions: Cards & Hover Effects ──────────────── */
+.et-hover-card {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.22s ease,
+              box-shadow 0.22s ease,
+              background-color 0.22s ease;
+}
+
+.et-hover-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(232, 163, 56, 0.45) !important;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45), 0 0 12px rgba(232, 163, 56, 0.08);
+}
+
+.et-hover-row {
+  transition: background-color 0.18s ease,
+              border-color 0.18s ease,
+              transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.et-hover-row:hover {
+  transform: translateX(3px);
+  border-color: rgba(232, 163, 56, 0.35) !important;
+}
+
+/* ── Micro-interactions: Buttons & Controls ─────────────────── */
+.et-btn-interactive {
+  transition: transform 0.14s ease,
+              background-color 0.2s ease,
+              box-shadow 0.2s ease,
+              color 0.2s ease,
+              border-color 0.2s ease;
+}
+
+.et-btn-interactive:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.et-btn-interactive:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.et-option-btn {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.et-option-btn:hover:not(:disabled) {
+  transform: translateX(4px);
+  border-color: rgba(232, 163, 56, 0.5) !important;
+  background: rgba(232, 163, 56, 0.06) !important;
+}
+
+.et-option-btn:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.et-option-btn.selected {
+  animation: optionPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Custom Dark Sleek Scrollbar ────────────────────────────── */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #383838;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+}
+
