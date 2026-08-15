@@ -4640,7 +4640,7 @@ function Sidebar({ view, category, onNav, username, onLogout }) {
   ];
 
   const isDaily = category && category.startsWith("daily_");
-  const isAssignment = category && getCategoryMeta(category, currentUser)?.isAssignment;
+  const isAssignment = category && getCategoryMeta(category, username)?.isAssignment;
   const activeTab =
     view === "quiz" || view === "result"
       ? isDaily
