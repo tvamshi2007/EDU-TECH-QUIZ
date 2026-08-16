@@ -3162,9 +3162,6 @@ function getDailyItems(dateStr, username = "") {
   const dateMs = new Date(dateStr + "T00:00:00").getTime();
   const dayIndex = Math.max(0, Math.round((dateMs - startMs) / 86400000));
 
-  // Include username in the seed to give each user different questions
-  const userSeed = hashStr(dateStr + "|" + username);
-
   const picked = [];
 
   for (const key of DAILY_CATEGORY_KEYS) {
@@ -3176,7 +3173,7 @@ function getDailyItems(dateStr, username = "") {
     // Instead of rotating by count each day, rotate by a larger step
     // This creates a bigger gap between repeated questions
     const rotationStep = Math.max(count, Math.floor(pool.length / 7)); // Ensure at least 7-day gap
-    const offset = ((dayIndex * rotationStep) + userSeed) % pool.length;
+    const offset = (dayIndex * rotationStep) % pool.length;
     
     const slice = [];
     for (let i = 0; i < count; i++) {
@@ -3186,8 +3183,8 @@ function getDailyItems(dateStr, username = "") {
     picked.push(...slice.map((item) => ({ ...item, srcLabel: cat.label })));
   }
 
-  // Final shuffle to mix all categories together — different order each day and per user.
-  const mixRng = mulberry32(hashStr(dateStr + "|" + username + "|mix"));
+  // Final shuffle to mix all categories together — different order each day.
+  const mixRng = mulberry32(hashStr(dateStr + "|mix"));
   for (let i = picked.length - 1; i > 0; i--) {
     const j = Math.floor(mixRng() * (i + 1));
     [picked[i], picked[j]] = [picked[j], picked[i]];
