@@ -69,6 +69,7 @@ x -= 3
 print(x)`,
       opts: [`None`, `Error`, `7`, `0`],
       correct: 2,
+      explanation: `The -= operator subtracts the right operand from the left operand and assigns the result to the left operand. x -= 3 is equivalent to x = x - 3. Since x = 10, x = 10 - 3 = 7. Therefore, print(x) outputs 7.`,
     },
     {
       q: `What is the output of the following code?`,
@@ -77,24 +78,28 @@ x *= 4
 print(x)`,
       opts: [`Error`, `None`, `12`, `0`],
       correct: 2,
+      explanation: `The *= operator multiplies the left operand by the right operand and assigns the result to the left operand. x *= 4 is equivalent to x = x * 4. Since x = 3, x = 3 * 4 = 12. Therefore, print(x) outputs 12.`,
     },
     {
       q: `What is the output of the following code?`,
       code: `print(max(3, 7, 2))`,
       opts: [`0`, `Error`, `None`, `7`],
       correct: 3,
+      explanation: `The max() function returns the largest value among the given arguments. Among 3, 7, and 2, the largest value is 7. Therefore, print(max(3, 7, 2)) outputs 7.`,
     },
     {
       q: `What is the output of the following code?`,
       code: `print(min(3, 7, 2))`,
       opts: [`2`, `0`, `Error`, `None`],
       correct: 0,
+      explanation: `The min() function returns the smallest value among the given arguments. Among 3, 7, and 2, the smallest value is 2. Therefore, print(min(3, 7, 2)) outputs 2.`,
     },
     {
       q: `What is the output of the following code?`,
       code: `print(sum([1, 2, 3, 4]))`,
       opts: [`Error`, `10`, `None`, `0`],
       correct: 1,
+      explanation: `The sum() function calculates the sum of all elements in an iterable. sum([1, 2, 3, 4]) = 1 + 2 + 3 + 4 = 10. Therefore, print(sum([1, 2, 3, 4])) outputs 10.`,
     },
     {
       q: `What is the output of the following code?`,
@@ -6857,6 +6862,16 @@ function AnswerKey({ category, record, now, onHome, onRetake, currentUser }) {
                 {!isCorrect && (
                   <div style={{ color: COLORS.clay, marginTop: 2 }}>
                     Your answer: {item.opts[userAns]}
+                  </div>
+                )}
+                {item.explanation && (
+                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${COLORS.line}` }}>
+                    <div style={{ fontSize: 11, letterSpacing: 1, textTransform: "uppercase", color: COLORS.paperDim, marginBottom: 6 }}>
+                      Explanation
+                    </div>
+                    <div style={{ fontSize: 13, lineHeight: 1.6, color: COLORS.paper }}>
+                      {item.explanation}
+                    </div>
                   </div>
                 )}
               </div>
