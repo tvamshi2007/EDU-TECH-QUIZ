@@ -3909,16 +3909,6 @@ export default function QuizApp() {
               onLogout={logout}
               onGoExams={() => setView("home")}
               onViewLeaderboard={() => setView("leaderboard")}
-              onExportUserData={exportUserDataToExcel}
-            />
-          )}
-
-          {view === "users" && (
-            <UserManagement
-              get={get}
-              del={del}
-              set={set}
-              onGoExams={() => setView("home")}
             />
           )}
         </div>
@@ -4751,7 +4741,6 @@ function Sidebar({ view, category, onNav, username, onLogout }) {
     { id: "answersMenu", label: "Answers", icon: KeyRound },
     { id: "ide", label: "Code IDE", icon: Code2 },
     { id: "leaderboard", label: "Leaders", icon: Trophy },
-    { id: "users", label: "Users", icon: User },
     { id: "profile", label: "Profile", icon: User },
   ];
 
@@ -5165,7 +5154,6 @@ function Profile({
   onLogout,
   onGoExams,
   onViewLeaderboard,
-  onExportUserData,
 }) {
   const attempted = Object.entries(submissions).filter(([, v]) => v);
   const totalScore = attempted.reduce((sum, [, v]) => sum + v.score, 0);
@@ -5567,12 +5555,6 @@ function Profile({
         <button onClick={onGoExams} style={btnPrimary}>
           Go to exams
         </button>
-        {onExportUserData && (
-          <button onClick={onExportUserData} style={btnGhost}>
-            <Download size={14} style={{ marginRight: 6 }} />
-            Export User Data
-          </button>
-        )}
         <button onClick={onLogout} style={btnGhost}>
           Log out
         </button>
