@@ -3216,7 +3216,7 @@ export default function QuizApp() {
   const [authError, setAuthError] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
 
-  const [view, setView] = useState("home"); // home | quiz | result | key | answersMenu | profile | leaderboard
+  const [view, setView] = useState("home"); // home | quiz | result | key | answersMenu | profile | leaderboard | users
   const [category, setCategory] = useState(null);
   const [activeItems, setActiveItems] = useState([]);
   const [qIndex, setQIndex] = useState(0);
@@ -3910,6 +3910,15 @@ export default function QuizApp() {
               onGoExams={() => setView("home")}
               onViewLeaderboard={() => setView("leaderboard")}
               onExportUserData={exportUserDataToExcel}
+            />
+          )}
+
+          {view === "users" && (
+            <UserManagement
+              get={get}
+              del={del}
+              set={set}
+              onGoExams={() => setView("home")}
             />
           )}
         </div>
@@ -4742,6 +4751,7 @@ function Sidebar({ view, category, onNav, username, onLogout }) {
     { id: "answersMenu", label: "Answers", icon: KeyRound },
     { id: "ide", label: "Code IDE", icon: Code2 },
     { id: "leaderboard", label: "Leaders", icon: Trophy },
+    { id: "users", label: "Users", icon: User },
     { id: "profile", label: "Profile", icon: User },
   ];
 
@@ -5607,6 +5617,236 @@ function StatChip({ label, value, color }) {
 }
 
 const RANK_MEDAL = { 1: "#E8C34A", 2: "#C7CDD6", 3: "#C98A4B" };
+
+function UserManagement({ get, del, set, onGoExams }) {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterProvider, setFilterProvider] = useState("all");
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const allUsers = await get("all_users", true) || [];
+      const userData = [];
+      
+      for (const username of allUsers) {
+        const account = await get(`user:${username}`, true);
+        const presence = await get(`presence:${username}`, true);
+        if (account) {
+          userData.push({
+            username,
+            ...account,
+            lastSeen: presence?.lastSeen || account.lastSeen,
+            isOnline: presence && (Date.now() - presence.lastSeen) < 300000 // 5 minutes
+          });
+        }
+      }
+      
+      setUsers(userData);
+    } catch (err) {
+      console.error("Error loading users:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (username) => {
+    if (!confirm(`Are you sure you want to delete user "${username}"?`)) {
+      return;
+    }
+
+    try {
+      // Remove from all_users list
+      const allUsers = await get("all_users", true) || [];
+      const updatedUsers = allUsers.filter(u => u !== username);
+      await set("all_users", updatedUsers, true);
+
+      // Remove user account
+      await del(`user:${username}`, true);
+
+      // Remove presence
+      await del(`presence:${username}`, true);
+
+      // Reload users
+      await loadUsers();
+    } catch (err) {
+      console.error("Error deleting user:", err);
+      alert("Failed to delete user. Please try again.");
+    }
+  };
+
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.username.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesProvider = filterProvider === "all" || user.provider === filterProvider;
+    return matchesSearch && matchesProvider;
+  });
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: "center", padding: "40px", color: COLORS.paperDim }}>
+        Loading users...
+      </div>
+    );
+  }
+
+  return (
+    <div className="animate-fade-in">
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 24,
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontFamily: "'Spectral', serif",
+              fontSize: 24,
+              fontWeight: 600,
+              marginBottom: 4,
+            }}
+          >
+            User Management
+          </div>
+          <div style={{ color: COLORS.paperDim, fontSize: 13 }}>
+            {users.length} total users
+          </div>
+        </div>
+        <button onClick={onGoExams} style={btnGhost}>
+          Back to exams
+        </button>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          marginBottom: 20,
+          flexWrap: "wrap",
+        }}
+      >
+        <input
+          type="text"
+          placeholder="Search users..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{
+            ...inputStyle,
+            flex: 1,
+            minWidth: 200,
+            marginBottom: 0,
+          }}
+        />
+        <select
+          value={filterProvider}
+          onChange={(e) => setFilterProvider(e.target.value)}
+          style={{
+            ...inputStyle,
+            marginBottom: 0,
+            minWidth: 150,
+          }}
+        >
+          <option value="all">All Providers</option>
+          <option value="local">Local</option>
+          <option value="google">Google</option>
+        </select>
+      </div>
+
+      <div style={{ display: "grid", gap: 12 }}>
+        {filteredUsers.length === 0 ? (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "40px",
+              border: `1px dashed ${COLORS.line}`,
+              borderRadius: 8,
+              color: COLORS.paperDim,
+            }}
+          >
+            No users found
+          </div>
+        ) : (
+          filteredUsers.map((user) => (
+            <div
+              key={user.username}
+              style={{
+                background: COLORS.inkSoft,
+                border: `1px solid ${COLORS.line}`,
+                borderRadius: 8,
+                padding: 16,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <div style={{ flex: 1 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    marginBottom: 4,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: user.isOnline ? COLORS.green : COLORS.paperDim,
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: COLORS.paper,
+                    }}
+                  >
+                    {user.username}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                      background: user.provider === "google" ? "#4285F4" : COLORS.amber,
+                      color: "#fff",
+                    }}
+                  >
+                    {user.provider || "local"}
+                  </span>
+                </div>
+                <div style={{ fontSize: 12, color: COLORS.paperDim }}>
+                  Created: {new Date(user.createdAt).toLocaleString()}
+                  {user.lastSeen && ` • Last seen: ${new Date(user.lastSeen).toLocaleString()}`}
+                </div>
+              </div>
+              <button
+                onClick={() => handleDeleteUser(user.username)}
+                style={{
+                  ...btnGhost,
+                  color: COLORS.clay,
+                  padding: "6px 12px",
+                  fontSize: 12,
+                }}
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
 
 function Leaderboard({
   leaderboard,
