@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { getMemberDisplayName } from "./src/memberName";
+import * as XLSX from "xlsx";
 import {
   Lock,
   Unlock,
@@ -23,6 +24,7 @@ import {
   Trash2,
   ChevronDown,
   Loader2,
+  Download,
 } from "lucide-react";
 
 const COLORS = {
@@ -3299,8 +3301,17 @@ export default function QuizApp() {
       password: encode(password),
       createdAt: Date.now(),
       displayName: (displayName || "").trim() || uname,
+      provider: 'local'
     };
     await set(`user:${uname}`, account, true);
+    
+    // Add to all_users list
+    const allUsers = await get("all_users", true) || [];
+    if (!allUsers.includes(uname)) {
+      allUsers.push(uname);
+      await set("all_users", allUsers, true);
+    }
+    
     await set("session", { username: uname }, false);
     setAuthBusy(false);
     setCurrentUser(uname);
@@ -3368,6 +3379,13 @@ export default function QuizApp() {
       };
       await set(`user:${googleUsername}`, account, true);
       
+      // Add to all_users list
+      const allUsers = await get("all_users", true) || [];
+      if (!allUsers.includes(googleUsername)) {
+        allUsers.push(googleUsername);
+        await set("all_users", allUsers, true);
+      }
+      
       // Set session
       await set("session", { username: googleUsername }, false);
       setCurrentUser(googleUsername);
@@ -3382,6 +3400,52 @@ export default function QuizApp() {
     } catch (err) {
       setAuthError("Google login failed. Please try again.");
       setAuthBusy(false);
+    }
+  };
+
+  const exportUserDataToExcel = async () => {
+    try {
+      // Collect all user data from storage
+      const userData = [];
+      
+      // Get all user accounts
+      const allUsers = await get("all_users", true) || [];
+      
+      for (const username of allUsers) {
+        const account = await get(`user:${username}`, true);
+        if (account) {
+          userData.push({
+            'Username': username,
+            'Created At': new Date(account.createdAt).toLocaleString(),
+            'Provider': account.provider || 'local',
+            'Last Seen': account.lastSeen ? new Date(account.lastSeen).toLocaleString() : 'N/A'
+          });
+        }
+      }
+      
+      // Create workbook
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(userData);
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 20 }, // Username
+        { wch: 25 }, // Created At
+        { wch: 15 }, // Provider
+        { wch: 25 }  // Last Seen
+      ];
+      
+      XLSX.utils.book_append_sheet(wb, ws, "User Data");
+      
+      // Generate filename with timestamp
+      const fileName = `user_data_${new Date().toISOString().slice(0,10)}.xlsx`;
+      
+      // Download file
+      XLSX.writeFile(wb, fileName);
+      
+    } catch (err) {
+      console.error("Error exporting user data:", err);
+      alert("Failed to export user data. Please try again.");
     }
   };
 
@@ -3845,6 +3909,7 @@ export default function QuizApp() {
               onLogout={logout}
               onGoExams={() => setView("home")}
               onViewLeaderboard={() => setView("leaderboard")}
+              onExportUserData={exportUserDataToExcel}
             />
           )}
         </div>
@@ -5090,6 +5155,7 @@ function Profile({
   onLogout,
   onGoExams,
   onViewLeaderboard,
+  onExportUserData,
 }) {
   const attempted = Object.entries(submissions).filter(([, v]) => v);
   const totalScore = attempted.reduce((sum, [, v]) => sum + v.score, 0);
@@ -5491,6 +5557,12 @@ function Profile({
         <button onClick={onGoExams} style={btnPrimary}>
           Go to exams
         </button>
+        {onExportUserData && (
+          <button onClick={onExportUserData} style={btnGhost}>
+            <Download size={14} style={{ marginRight: 6 }} />
+            Export User Data
+          </button>
+        )}
         <button onClick={onLogout} style={btnGhost}>
           Log out
         </button>
